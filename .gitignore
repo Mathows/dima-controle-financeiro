@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Local-only configuration with secrets/keys (per-developer)
+src/Dima.Web/wwwroot/appsettings.Development.json
+
 # User-specific files
 *.rsuser
 *.suo
