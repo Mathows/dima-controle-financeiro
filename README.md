@@ -80,7 +80,7 @@ Veja [src/Dima.Api/Data/Views/](src/Dima.Api/Data/Views/).
 
 ### 1. Clone o repositório
 ```bash
-git clone https://github.com/mathows/dima-controle-financeiro.git
+git clone https://github.com/Mathows/dima-controle-financeiro.git
 cd dima-controle-financeiro
 ```
 
@@ -157,7 +157,7 @@ Repositório original do curso: https://github.com/balta-io/3054
 ## 👤 Autor
 
 **Matheus Alexandre**
-- GitHub: [@mathows](https://github.com/mathows)
+- GitHub: [@Mathows](https://github.com/Mathows)
 
 ---
 
