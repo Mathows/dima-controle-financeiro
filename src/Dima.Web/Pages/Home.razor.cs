@@ -32,7 +32,7 @@ public partial class HomePage : ComponentBase
         var request = new GetFinancialSummaryRequest();
         var result = await Handler.GetFinancialSummaryReportAsync(request);
         if (result.IsSuccess)
-            Summary = result.Data;
+            Summary = result.Data ?? new FinancialSummary(string.Empty, 0, 0);
     }
 
     #endregion
