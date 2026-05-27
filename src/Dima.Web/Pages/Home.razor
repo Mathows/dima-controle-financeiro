@@ -1,9 +1,46 @@
-﻿@page "/"
+@page "/"
 @inherits HomePage
+
+<MudPaper Elevation="0" Class="pa-4 mb-4" Style="background-color: transparent;">
+    <MudGrid AlignItems="Center.Center" Spacing="2">
+        <MudItem xs="12" sm="6">
+            <MudText Typo="Typo.h5">Dashboard</MudText>
+            <MudText Typo="Typo.body2" Style="opacity: .8;">
+                Acompanhe suas finanças no período selecionado.
+            </MudText>
+        </MudItem>
+        <MudItem xs="6" sm="3">
+            <MudSelect T="int"
+                       Label="Mês"
+                       @bind-Value="SelectedMonth"
+                       @bind-Value:after="OnPeriodChangedAsync"
+                       Dense="true"
+                       Variant="Variant.Outlined">
+                @foreach (var month in Months)
+                {
+                    <MudSelectItem Value="@month.Number">@month.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="6" sm="3">
+            <MudSelect T="int"
+                       Label="Ano"
+                       @bind-Value="SelectedYear"
+                       @bind-Value:after="OnPeriodChangedAsync"
+                       Dense="true"
+                       Variant="Variant.Outlined">
+                @foreach (var year in Years)
+                {
+                    <MudSelectItem Value="@year">@year</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
 
 <MudGrid Justify="Justify.Center">
     <MudItem lg="6" md="12" sm="12" xs="12">
-        <MudCard Class="pa-8">
+        <MudCard Class="pa-6">
             <MudCardHeader>
                 <CardHeaderContent>
                     <MudText Typo="Typo.h6">Resumo Financeiro</MudText>
@@ -15,42 +52,27 @@
                 </CardHeaderActions>
             </MudCardHeader>
             <MudCardContent>
-                <p>
-                    <strong>SALDO</strong>
-                </p>
-                @if (Summary is null)
+                @if (IsLoadingSummary || Summary is null)
                 {
-                    <div class="d-flex justify-center align-center" style="height: 350px">
+                    <div class="d-flex justify-center align-center" style="height: 280px">
                         <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
                     </div>
                 }
                 else
                 {
-                    @if (Summary.Total > 0)
-                    {
-                        <MudText Color="Color.Success" Typo="Typo.h3">
-                            @(ShowValues ? Summary.Total.ToString("C") : "R$ ********")
-                        </MudText>
-                    }
-                    else
-                    {
-                        <MudText Color="Color.Error" Typo="Typo.h3">
-                            @(ShowValues ? Summary.Total.ToString("C") : "R$ ********")
-                        </MudText>
-                    }
+                    <p><strong>SALDO</strong></p>
+                    <MudText Color="@(Summary.Total >= 0 ? Color.Success : Color.Error)" Typo="Typo.h3">
+                        @(ShowValues ? Summary.Total.ToString("C") : "R$ ********")
+                    </MudText>
 
                     <br/>
-                    <p>
-                        <strong>Entradas</strong>
-                    </p>
+                    <p><strong>Entradas</strong></p>
                     <MudText Color="Color.Success">
                         @(ShowValues ? Summary.Incomes.ToString("C") : "R$ ********")
                     </MudText>
 
                     <br/>
-                    <p>
-                        <strong>Saídas</strong>
-                    </p>
+                    <p><strong>Saídas</strong></p>
                     <MudText Color="Color.Error">
                         @(ShowValues ? Summary.Expenses.ToString("C") : "R$ ********")
                     </MudText>
@@ -58,10 +80,74 @@
             </MudCardContent>
         </MudCard>
     </MudItem>
+
     <MudItem lg="6" md="12" sm="12" xs="12">
-        <MudCard Class="pa-8">
+        <MudCard Class="pa-6" Style="height: 100%;">
             <MudCardHeader>
-                <MudText Typo="Typo.h6">Receitas e Despesas</MudText>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Lançamentos do período</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudIconButton Icon="@Icons.Material.Filled.Add" Href="/lancamentos/novo"
+                                   Color="Color.Primary" aria-label="Novo lançamento"/>
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (IsLoadingTransactions)
+                {
+                    <div class="d-flex justify-center align-center" style="height: 280px">
+                        <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+                    </div>
+                }
+                else if (Transactions.Count == 0)
+                {
+                    <div class="d-flex flex-column align-center justify-center" style="height: 280px; opacity: .7;">
+                        <MudIcon Icon="@Icons.Material.Outlined.ReceiptLong" Size="Size.Large"/>
+                        <MudText Typo="Typo.body2" Class="mt-2">Sem lançamentos neste período.</MudText>
+                        <MudButton Href="/lancamentos/novo"
+                                   Variant="Variant.Text"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   Class="mt-2">
+                            Novo lançamento
+                        </MudButton>
+                    </div>
+                }
+                else
+                {
+                    <MudList T="Transaction" Dense="true" Class="pa-0" Style="max-height: 320px; overflow-y: auto;">
+                        @foreach (var t in Transactions.OrderBy(x => x.PaidOrReceivedAt))
+                        {
+                            <MudListItem T="Transaction" Class="px-2">
+                                <div class="d-flex align-center" style="width: 100%;">
+                                    <MudIcon Icon="@(t.Type == ETransactionType.Deposit ? Icons.Material.Filled.ArrowUpward : Icons.Material.Filled.ArrowDownward)"
+                                             Color="@(t.Type == ETransactionType.Deposit ? Color.Success : Color.Error)"
+                                             Size="Size.Small"/>
+                                    <div class="ml-3" style="flex-grow: 1; overflow: hidden;">
+                                        <MudText Typo="Typo.body2" Style="font-weight: 500;">@t.Title</MudText>
+                                        <MudText Typo="Typo.caption" Style="opacity: .7;">
+                                            @FormatTransactionDate(t.PaidOrReceivedAt)
+                                        </MudText>
+                                    </div>
+                                    <MudText Typo="Typo.body2"
+                                             Color="@(t.Type == ETransactionType.Deposit ? Color.Success : Color.Error)"
+                                             Style="font-weight: 500;">
+                                        @(ShowValues ? t.Amount.ToString("C") : "R$ ********")
+                                    </MudText>
+                                </div>
+                            </MudListItem>
+                            <MudDivider/>
+                        }
+                    </MudList>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem lg="6" md="12" sm="12" xs="12">
+        <MudCard Class="pa-6" Style="height: 100%;">
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">Receitas e Despesas (últimos 12 meses)</MudText>
             </MudCardHeader>
             <MudCardContent>
                 <IncomesAndExpensesChart/>
@@ -69,7 +155,7 @@
         </MudCard>
     </MudItem>
     <MudItem lg="6" md="12" sm="12" xs="12">
-        <MudCard Class="pa-8">
+        <MudCard Class="pa-6" Style="height: 100%;">
             <MudCardHeader>
                 <MudText Typo="Typo.h6">Entradas por Categoria</MudText>
             </MudCardHeader>
@@ -79,7 +165,7 @@
         </MudCard>
     </MudItem>
     <MudItem lg="6" md="12" sm="12" xs="12">
-        <MudCard Class="pa-8">
+        <MudCard Class="pa-6" Style="height: 100%;">
             <MudCardHeader>
                 <MudText Typo="Typo.h6">Despesas por Categoria</MudText>
             </MudCardHeader>

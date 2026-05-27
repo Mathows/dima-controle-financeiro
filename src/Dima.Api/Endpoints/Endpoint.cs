@@ -46,7 +46,10 @@ public static class Endpoint
             .WithTags("Identity")
             .MapEndpoint<LogoutEndpoint>()
             .MapEndpoint<GetRolesEndpoint>()
-            .MapEndpoint<CreateAccountEndpoint>();
+            .MapEndpoint<CreateAccountEndpoint>()
+            .MapEndpoint<GetAccountEndpoint>()
+            .MapEndpoint<UpdateProfileEndpoint>()
+            .MapEndpoint<ChangePasswordEndpoint>();
 
         endpoints.MapGroup("/v1/reports")
             .WithTags("Reports")

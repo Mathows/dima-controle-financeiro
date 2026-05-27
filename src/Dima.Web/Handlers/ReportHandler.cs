@@ -33,7 +33,8 @@ public class ReportHandler(IHttpClientFactory httpClientFactory) : IReportHandle
 
     public async Task<Response<FinancialSummary?>> GetFinancialSummaryReportAsync(GetFinancialSummaryRequest request)
     {
-        return await _client.GetFromJsonAsync<Response<FinancialSummary?>>($"v1/reports/summary")
+        var url = $"v1/reports/summary?year={request.Year}&month={request.Month}";
+        return await _client.GetFromJsonAsync<Response<FinancialSummary?>>(url)
                ?? new Response<FinancialSummary?>(null, 400, "Não foi possível obter os dados");
     }
 }

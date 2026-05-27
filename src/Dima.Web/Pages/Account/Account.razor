@@ -1,0 +1,97 @@
+@page "/conta"
+@inherits AccountPage
+
+<PageTitle>Dima - Minha Conta</PageTitle>
+
+<MudGrid Justify="Justify.Center">
+    <MudItem xs="12" md="10" lg="8">
+        <MudText Typo="Typo.h4" Class="mb-4">Minha conta</MudText>
+
+        @if (IsLoading)
+        {
+            <div class="d-flex justify-center pa-12">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+            </div>
+        }
+        else
+        {
+            <MudTabs Elevation="2" Rounded="true" PanelClass="pa-6" Color="@Color.Primary">
+                <MudTabPanel Text="Perfil" Icon="@Icons.Material.Outlined.Person">
+                    <EditForm Model="@ProfileModel" OnValidSubmit="OnUpdateProfileAsync">
+                        <DataAnnotationsValidator/>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Label="Nome"
+                                              For="@(() => ProfileModel.FirstName)"
+                                              @bind-Value="ProfileModel.FirstName"/>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Label="Sobrenome"
+                                              For="@(() => ProfileModel.LastName)"
+                                              @bind-Value="ProfileModel.LastName"/>
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField T="string"
+                                              Label="E-mail"
+                                              Value="@CurrentEmail"
+                                              Disabled="true"
+                                              ReadOnly="true"
+                                              HelperText="O e-mail não pode ser alterado."/>
+                            </MudItem>
+                        </MudGrid>
+                        <div class="d-flex justify-end mt-6">
+                            @if (IsSavingProfile)
+                            {
+                                <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+                            }
+                            else
+                            {
+                                <MudButton ButtonType="ButtonType.Submit"
+                                           Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.Save">
+                                    SALVAR ALTERAÇÕES
+                                </MudButton>
+                            }
+                        </div>
+                    </EditForm>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Senha" Icon="@Icons.Material.Outlined.Lock">
+                    <EditForm Model="@PasswordModel" OnValidSubmit="OnChangePasswordAsync">
+                        <DataAnnotationsValidator/>
+                        <MudTextField T="string"
+                                      Label="Senha atual"
+                                      InputType="InputType.Password"
+                                      For="@(() => PasswordModel.CurrentPassword)"
+                                      @bind-Value="PasswordModel.CurrentPassword"
+                                      Class="mb-2"/>
+                        <MudTextField T="string"
+                                      Label="Nova senha"
+                                      HelperText="Mínimo 6 caracteres"
+                                      InputType="InputType.Password"
+                                      For="@(() => PasswordModel.NewPassword)"
+                                      @bind-Value="PasswordModel.NewPassword"/>
+                        <div class="d-flex justify-end mt-6">
+                            @if (IsChangingPassword)
+                            {
+                                <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+                            }
+                            else
+                            {
+                                <MudButton ButtonType="ButtonType.Submit"
+                                           Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.Key">
+                                    ALTERAR SENHA
+                                </MudButton>
+                            }
+                        </div>
+                    </EditForm>
+                </MudTabPanel>
+            </MudTabs>
+        }
+    </MudItem>
+</MudGrid>
