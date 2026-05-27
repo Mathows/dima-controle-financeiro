@@ -16,7 +16,8 @@ Configuration.StripePublicKey = builder.Configuration.GetValue<string>("StripePu
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped<CookieHandler>();
+builder.Services.AddScoped<ITokenStorage, SessionTokenStorage>();
+builder.Services.AddScoped<BearerTokenHandler>();
 
 builder.Services.AddAuthorizationCore();
 
@@ -28,7 +29,7 @@ builder.Services.AddMudServices();
 
 builder.Services
     .AddHttpClient(Configuration.HttpClientName, opt => { opt.BaseAddress = new Uri(Configuration.BackendUrl); })
-    .AddHttpMessageHandler<CookieHandler>();
+    .AddHttpMessageHandler<BearerTokenHandler>();
 
 builder.Services.AddTransient<IAccountHandler, AccountHandler>();
 builder.Services.AddTransient<ITransactionHandler, TransactionHandler>();

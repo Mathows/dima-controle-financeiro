@@ -4,6 +4,7 @@ using Dima.Api.Models;
 using Dima.Api.Services;
 using Dima.Core;
 using Dima.Core.Handlers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Stripe;
@@ -38,7 +39,8 @@ public static class BuilderExtension
     public static void AddSecurity(this WebApplicationBuilder builder)
     {
         builder.Services
-            .AddAuthentication(IdentityConstants.ApplicationScheme)
+            .AddAuthentication(IdentityConstants.BearerScheme)
+            .AddBearerToken(IdentityConstants.BearerScheme)
             .AddIdentityCookies();
 
         builder.Services.ConfigureApplicationCookie(options =>
@@ -48,7 +50,15 @@ public static class BuilderExtension
             options.Cookie.HttpOnly = true;
         });
 
-        builder.Services.AddAuthorization();
+        builder.Services.AddAuthorization(options =>
+        {
+            options.DefaultPolicy = new AuthorizationPolicyBuilder()
+                .AddAuthenticationSchemes(
+                    IdentityConstants.BearerScheme,
+                    IdentityConstants.ApplicationScheme)
+                .RequireAuthenticatedUser()
+                .Build();
+        });
     }
 
     public static void AddDataContexts(this WebApplicationBuilder builder)
