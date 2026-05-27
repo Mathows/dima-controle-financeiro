@@ -16,11 +16,15 @@ public class GetFinancialSummaryEndpoint : IEndpoint
 
     private static async Task<IResult> HandleAsync(
         ClaimsPrincipal user,
-        IReportHandler handler)
+        IReportHandler handler,
+        [Microsoft.AspNetCore.Mvc.FromQuery] int? year = null,
+        [Microsoft.AspNetCore.Mvc.FromQuery] int? month = null)
     {
         var request = new GetFinancialSummaryRequest
         {
-            UserId = user.Identity?.Name ?? string.Empty
+            UserId = user.Identity?.Name ?? string.Empty,
+            Year = year,
+            Month = month
         };
         var result = await handler.GetFinancialSummaryReportAsync(request);
         return result.IsSuccess
