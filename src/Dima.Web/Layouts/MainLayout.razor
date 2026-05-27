@@ -24,7 +24,7 @@
                 </MudButton>
                 <MudSpacer/>
                 <MudText Typo="Typo.caption">
-                    @context.User.Identity?.Name
+                    @GetGreeting(context.User)
                 </MudText>
                 <MudSwitch
                     Color="Color.Inherit"
@@ -53,6 +53,14 @@
     private bool _isDrawerOpened = true;
     private bool _isDarkMode = true;
     private MudThemeProvider _mudThemeProvider = null!;
+
+    private static string GetGreeting(System.Security.Claims.ClaimsPrincipal user)
+    {
+        var firstName = user.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value;
+        return string.IsNullOrWhiteSpace(firstName)
+            ? user.Identity?.Name ?? string.Empty
+            : $"Olá, {firstName}";
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
