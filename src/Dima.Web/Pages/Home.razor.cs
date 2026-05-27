@@ -134,5 +134,9 @@ public partial class HomePage : ComponentBase
     protected static string FormatTransactionDate(DateTime? date)
         => date?.ToString("dd 'de' MMM", CultureInfo.CurrentCulture) ?? "-";
 
+    protected string GetSelectedMonthName()
+        => new DateTime(SelectedYear, SelectedMonth, 1)
+            .ToString("MMMM 'de' yyyy", CultureInfo.CurrentCulture);
+
     #endregion
 }

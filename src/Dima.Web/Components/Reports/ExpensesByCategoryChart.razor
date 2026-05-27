@@ -1,7 +1,11 @@
 @inherits ExpensesByCategoryChartComponent
 
 <div class="d-flex justify-center align-center" style="height: 350px; width: 100%;">
-    @if (Data.Count > 0)
+    @if (IsLoading)
+    {
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+    }
+    else if (Data.Count > 0)
     {
         <MudChart
             ChartType="ChartType.Pie"
@@ -12,6 +16,9 @@
     }
     else
     {
-        <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+        <div class="d-flex flex-column align-center" style="opacity: .6;">
+            <MudIcon Icon="@Icons.Material.Outlined.PieChart" Size="Size.Large"/>
+            <MudText Typo="Typo.body2" Class="mt-2">Sem despesas neste período.</MudText>
+        </div>
     }
 </div>
