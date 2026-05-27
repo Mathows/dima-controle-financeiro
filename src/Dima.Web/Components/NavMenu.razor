@@ -1,11 +1,39 @@
-<div class="d-flex justify-center pb-8 pt-8">
-    <img src="imgs/logo.png" alt="Dima - Seu Controle Financeiro" width="200" />
+@inherits NavMenuComponent
+
+<div class="d-flex justify-center pb-4 pt-6">
+    <img src="imgs/logo.png" alt="Dima - Seu Controle Financeiro" width="160" />
 </div>
 
+<AuthorizeView>
+    <Authorized>
+        <MudPaper Elevation="0" Class="pa-4 mx-3 mb-2" Style="background-color: rgba(255,255,255,0.05); border-radius: 8px;">
+            <div class="d-flex align-center">
+                <MudAvatar Color="Color.Primary" Size="Size.Medium">
+                    @GetInitials(context.User)
+                </MudAvatar>
+                <div class="ml-3" style="overflow: hidden;">
+                    @{
+                        var displayName = GetDisplayName(context.User);
+                        var email = context.User.Identity?.Name ?? string.Empty;
+                        var showEmail = !string.IsNullOrWhiteSpace(email)
+                            && !string.Equals(email, displayName, StringComparison.OrdinalIgnoreCase);
+                    }
+                    <MudText Typo="Typo.body1" Style="font-weight: 500;">@displayName</MudText>
+                    @if (showEmail)
+                    {
+                        <MudText Typo="Typo.caption" Style="opacity: .8;">@email</MudText>
+                    }
+                </div>
+            </div>
+        </MudPaper>
+    </Authorized>
+</AuthorizeView>
+
 <MudNavMenu>
-    <MudNavLink Href="/" Match="NavLinkMatch.All">Dashboard</MudNavLink>
-    <MudNavLink Href="/lancamentos/historico">Histórico</MudNavLink>
-    <MudNavLink Href="/categorias">Categorias</MudNavLink>
-    <MudNavLink Href="/premium">Premium</MudNavLink>
-    <MudNavLink Href="/sair">Sair</MudNavLink>
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Dashboard">Dashboard</MudNavLink>
+    <MudNavLink Href="/lancamentos/historico" Icon="@Icons.Material.Outlined.History">Histórico</MudNavLink>
+    <MudNavLink Href="/categorias" Icon="@Icons.Material.Outlined.Category">Categorias</MudNavLink>
+    <MudNavLink Href="/premium" Icon="@Icons.Material.Outlined.WorkspacePremium">Premium</MudNavLink>
+    <MudNavLink Href="/conta" Icon="@Icons.Material.Outlined.ManageAccounts">Conta</MudNavLink>
+    <MudNavLink Href="/sair" Icon="@Icons.Material.Outlined.Logout">Sair</MudNavLink>
 </MudNavMenu>

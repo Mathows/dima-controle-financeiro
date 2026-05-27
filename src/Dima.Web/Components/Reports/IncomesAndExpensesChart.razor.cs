@@ -34,23 +34,25 @@ public partial class IncomesAndExpensesChartComponent : ComponentBase
         var result = await Handler.GetIncomesAndExpensesReportAsync(request);
         if (!result.IsSuccess || result.Data is null)
         {
-            Snackbar.Add("Não foi possível obter os dados do relatório", Severity.Error);
+            Series = [];
             return;
         }
 
         var incomes = new List<double>();
         var expenses = new List<double>();
 
-        foreach (var item in result.Data)
+        foreach (var item in result.Data.OrderBy(x => x.Year).ThenBy(x => x.Month))
         {
             incomes.Add((double)item.Incomes);
-            expenses.Add(-(double)item.Expenses);
+            expenses.Add(Math.Abs((double)item.Expenses));
             Labels.Add(GetMonthName(item.Month));
         }
 
         Options.YAxisTicks = 1000;
-        Options.LineStrokeWidth = 5;
+        Options.YAxisFormat = "0,K";
         Options.ChartPalette = ["#76FF01", Colors.Red.Default];
+        Options.InterpolationOption = InterpolationOption.NaturalSpline;
+
         Series =
         [
             new ChartSeries { Name = "Receitas", Data = incomes.ToArray() },
