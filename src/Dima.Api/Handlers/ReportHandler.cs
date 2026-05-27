@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dima.Api.Handlers;
 
-public class ReportHandler(AppDbContext context) : IReportHandler
+public class ReportHandler(AppDbContext context, ILogger<ReportHandler> logger) : IReportHandler
 {
     public async Task<Response<List<IncomesAndExpenses>?>> GetIncomesAndExpensesReportAsync(
         GetIncomesAndExpensesRequest request)
@@ -21,28 +21,39 @@ public class ReportHandler(AppDbContext context) : IReportHandler
 
         try
         {
-            var data = await context
+            var raw = await context
                 .Transactions
                 .AsNoTracking()
                 .Where(x =>
                     x.UserId == request.UserId
+                    && x.PaidOrReceivedAt != null
                     && x.PaidOrReceivedAt >= startDate
                     && x.PaidOrReceivedAt <= endDate)
-                .GroupBy(x => new { x.PaidOrReceivedAt!.Value.Year, x.PaidOrReceivedAt!.Value.Month })
-                .Select(g => new IncomesAndExpenses(
-                    request.UserId,
-                    g.Key.Month,
+                .GroupBy(x => new
+                {
+                    Year = x.PaidOrReceivedAt!.Value.Year,
+                    Month = x.PaidOrReceivedAt!.Value.Month
+                })
+                .Select(g => new
+                {
                     g.Key.Year,
-                    g.Where(t => t.Type == ETransactionType.Deposit).Sum(t => t.Amount),
-                    g.Where(t => t.Type == ETransactionType.Withdraw).Sum(t => t.Amount)))
+                    g.Key.Month,
+                    Incomes = g.Where(t => t.Type == ETransactionType.Deposit).Sum(t => t.Amount),
+                    Expenses = g.Where(t => t.Type == ETransactionType.Withdraw).Sum(t => t.Amount)
+                })
                 .OrderBy(x => x.Year)
                 .ThenBy(x => x.Month)
                 .ToListAsync();
 
+            var data = raw
+                .Select(r => new IncomesAndExpenses(request.UserId, r.Month, r.Year, r.Incomes, r.Expenses))
+                .ToList();
+
             return new Response<List<IncomesAndExpenses>?>(data);
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Falha ao obter Incomes/Expenses para Year={Year} Month={Month}", year, month);
             return new Response<List<IncomesAndExpenses>?>(null, 500, "Não foi possível obter as entradas e saídas");
         }
     }
@@ -56,27 +67,33 @@ public class ReportHandler(AppDbContext context) : IReportHandler
 
         try
         {
-            var data = await context
+            var raw = await context
                 .Transactions
                 .AsNoTracking()
                 .Where(x =>
                     x.UserId == request.UserId
                     && x.Type == ETransactionType.Deposit
+                    && x.PaidOrReceivedAt != null
                     && x.PaidOrReceivedAt >= startDate
                     && x.PaidOrReceivedAt <= endDate)
                 .GroupBy(x => x.Category.Title)
-                .Select(g => new IncomesByCategory(
-                    request.UserId,
-                    g.Key,
-                    year,
-                    g.Sum(t => t.Amount)))
+                .Select(g => new
+                {
+                    Category = g.Key,
+                    Incomes = g.Sum(t => t.Amount)
+                })
                 .OrderBy(x => x.Category)
                 .ToListAsync();
 
+            var data = raw
+                .Select(r => new IncomesByCategory(request.UserId, r.Category, year, r.Incomes))
+                .ToList();
+
             return new Response<List<IncomesByCategory>?>(data);
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Falha ao obter IncomesByCategory para Year={Year} Month={Month}", year, month);
             return new Response<List<IncomesByCategory>?>(null, 500,
                 "Não foi possível obter as entradas por categoria");
         }
@@ -91,27 +108,33 @@ public class ReportHandler(AppDbContext context) : IReportHandler
 
         try
         {
-            var data = await context
+            var raw = await context
                 .Transactions
                 .AsNoTracking()
                 .Where(x =>
                     x.UserId == request.UserId
                     && x.Type == ETransactionType.Withdraw
+                    && x.PaidOrReceivedAt != null
                     && x.PaidOrReceivedAt >= startDate
                     && x.PaidOrReceivedAt <= endDate)
                 .GroupBy(x => x.Category.Title)
-                .Select(g => new ExpensesByCategory(
-                    request.UserId,
-                    g.Key,
-                    year,
-                    g.Sum(t => t.Amount)))
+                .Select(g => new
+                {
+                    Category = g.Key,
+                    Expenses = g.Sum(t => t.Amount)
+                })
                 .OrderBy(x => x.Category)
                 .ToListAsync();
 
+            var data = raw
+                .Select(r => new ExpensesByCategory(request.UserId, r.Category, year, r.Expenses))
+                .ToList();
+
             return new Response<List<ExpensesByCategory>?>(data);
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Falha ao obter ExpensesByCategory para Year={Year} Month={Month}", year, month);
             return new Response<List<ExpensesByCategory>?>(null, 500,
                 "Não foi possível obter as despesas por categoria");
         }
@@ -143,8 +166,9 @@ public class ReportHandler(AppDbContext context) : IReportHandler
 
             return new Response<FinancialSummary?>(data);
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Falha ao obter FinancialSummary para Year={Year} Month={Month}", year, month);
             return new Response<FinancialSummary?>(null, 500,
                 "Não foi possível obter o resultado financeiro");
         }

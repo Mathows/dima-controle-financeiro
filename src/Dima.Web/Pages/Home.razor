@@ -40,7 +40,7 @@
 
 <MudGrid Justify="Justify.Center">
     <MudItem lg="6" md="12" sm="12" xs="12">
-        <MudCard Class="pa-6">
+        <MudCard Class="pa-6" Style="height: 100%;">
             <MudCardHeader>
                 <CardHeaderContent>
                     <MudText Typo="Typo.h6">Resumo Financeiro</MudText>
@@ -54,7 +54,7 @@
             <MudCardContent>
                 @if (IsLoadingSummary || Summary is null)
                 {
-                    <div class="d-flex justify-center align-center" style="height: 280px">
+                    <div class="d-flex justify-center align-center" style="height: 320px">
                         <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
                     </div>
                 }
