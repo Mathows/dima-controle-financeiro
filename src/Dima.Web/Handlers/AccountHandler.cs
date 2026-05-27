@@ -26,6 +26,29 @@ public class AccountHandler(IHttpClientFactory httpClientFactory) : IAccountHand
             : new Response<string>(null, 400, "Não foi possível realizar o seu cadastro");
     }
 
+    public async Task<Response<string>> ForgotPasswordAsync(ForgotPasswordRequest request)
+    {
+        var result = await _client.PostAsJsonAsync("v1/identity/forgotPassword", new { email = request.Email });
+        return result.IsSuccessStatusCode
+            ? new Response<string>("Se o e-mail existir, você receberá instruções para redefinir sua senha.", 200,
+                "Se o e-mail existir, você receberá instruções para redefinir sua senha.")
+            : new Response<string>(null, 400, "Não foi possível solicitar a redefinição da senha");
+    }
+
+    public async Task<Response<string>> ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        var payload = new
+        {
+            email = request.Email,
+            resetCode = request.ResetCode,
+            newPassword = request.NewPassword
+        };
+        var result = await _client.PostAsJsonAsync("v1/identity/resetPassword", payload);
+        return result.IsSuccessStatusCode
+            ? new Response<string>("Senha redefinida com sucesso!", 200, "Senha redefinida com sucesso!")
+            : new Response<string>(null, 400, "Não foi possível redefinir a senha. O código pode estar expirado ou inválido.");
+    }
+
     public async Task LogoutAsync()
     {
         var emptyContent = new StringContent("{}", Encoding.UTF8, "application/json");

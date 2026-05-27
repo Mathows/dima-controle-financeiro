@@ -33,6 +33,10 @@
                     For="@(() => InputModel.Password)"
                     @bind-Value="InputModel.Password"/>
 
+                <div class="d-flex justify-end mt-2">
+                    <MudLink Href="/esqueci-senha" Typo="Typo.body2">Esqueci minha senha</MudLink>
+                </div>
+
                 <div class="d-flex mt-8">
                     @if (IsBusy)
                     {
