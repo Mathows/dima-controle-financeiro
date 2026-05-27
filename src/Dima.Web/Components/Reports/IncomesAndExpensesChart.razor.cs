@@ -8,6 +8,13 @@ namespace Dima.Web.Components.Reports;
 
 public partial class IncomesAndExpensesChartComponent : ComponentBase
 {
+    #region Parameters
+
+    [Parameter] public int? Year { get; set; }
+    [Parameter] public int? Month { get; set; }
+
+    #endregion
+
     #region Properties
 
     public ChartOptions Options { get; set; } = new();
@@ -18,19 +25,43 @@ public partial class IncomesAndExpensesChartComponent : ComponentBase
 
     #region Services
 
-    [Inject]
-    public IReportHandler Handler { get; set; } = null!;
-
-    [Inject]
-    public ISnackbar Snackbar { get; set; } = null!;
+    [Inject] public IReportHandler Handler { get; set; } = null!;
 
     #endregion
 
-    #region Override
+    #region State
 
-    protected override async Task OnInitializedAsync()
+    private int? _lastYear;
+    private int? _lastMonth;
+
+    #endregion
+
+    #region Lifecycle
+
+    protected override async Task OnParametersSetAsync()
     {
-        var request = new GetIncomesAndExpensesRequest();
+        if (Year == _lastYear && Month == _lastMonth && Series is not null)
+            return;
+
+        _lastYear = Year;
+        _lastMonth = Month;
+        await LoadAsync();
+    }
+
+    #endregion
+
+    #region Methods
+
+    private async Task LoadAsync()
+    {
+        Series = null;
+        Labels = [];
+
+        var request = new GetIncomesAndExpensesRequest
+        {
+            Year = Year,
+            Month = Month
+        };
         var result = await Handler.GetIncomesAndExpensesReportAsync(request);
         if (!result.IsSuccess || result.Data is null)
         {

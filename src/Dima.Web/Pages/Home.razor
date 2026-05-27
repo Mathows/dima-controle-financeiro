@@ -147,10 +147,10 @@
     <MudItem lg="6" md="12" sm="12" xs="12">
         <MudCard Class="pa-6" Style="height: 100%;">
             <MudCardHeader>
-                <MudText Typo="Typo.h6">Receitas e Despesas (últimos 12 meses)</MudText>
+                <MudText Typo="Typo.h6">Receitas e Despesas (12 meses até @GetSelectedMonthName())</MudText>
             </MudCardHeader>
             <MudCardContent>
-                <IncomesAndExpensesChart/>
+                <IncomesAndExpensesChart Year="SelectedYear" Month="SelectedMonth"/>
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -160,7 +160,7 @@
                 <MudText Typo="Typo.h6">Entradas por Categoria</MudText>
             </MudCardHeader>
             <MudCardContent>
-                <IncomesByCategoryChart/>
+                <IncomesByCategoryChart Year="SelectedYear" Month="SelectedMonth"/>
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -170,7 +170,7 @@
                 <MudText Typo="Typo.h6">Despesas por Categoria</MudText>
             </MudCardHeader>
             <MudCardContent>
-                <ExpensesByCategoryChart/>
+                <ExpensesByCategoryChart Year="SelectedYear" Month="SelectedMonth"/>
             </MudCardContent>
         </MudCard>
     </MudItem>

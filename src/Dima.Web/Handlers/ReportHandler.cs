@@ -13,21 +13,24 @@ public class ReportHandler(IHttpClientFactory httpClientFactory) : IReportHandle
     public async Task<Response<List<IncomesAndExpenses>?>> GetIncomesAndExpensesReportAsync(
         GetIncomesAndExpensesRequest request)
     {
-        return await _client.GetFromJsonAsync<Response<List<IncomesAndExpenses>?>>($"v1/reports/incomes-expenses")
+        var url = $"v1/reports/incomes-expenses?year={request.Year}&month={request.Month}";
+        return await _client.GetFromJsonAsync<Response<List<IncomesAndExpenses>?>>(url)
                ?? new Response<List<IncomesAndExpenses>?>(null, 400, "Não foi possível obter os dados");
     }
 
     public async Task<Response<List<IncomesByCategory>?>> GetIncomesByCategoryReportAsync(
         GetIncomesByCategoryRequest request)
     {
-        return await _client.GetFromJsonAsync<Response<List<IncomesByCategory>?>>($"v1/reports/incomes")
+        var url = $"v1/reports/incomes?year={request.Year}&month={request.Month}";
+        return await _client.GetFromJsonAsync<Response<List<IncomesByCategory>?>>(url)
                ?? new Response<List<IncomesByCategory>?>(null, 400, "Não foi possível obter os dados");
     }
 
     public async Task<Response<List<ExpensesByCategory>?>> GetExpensesByCategoryReportAsync(
         GetExpensesByCategoryRequest request)
     {
-        return await _client.GetFromJsonAsync<Response<List<ExpensesByCategory>?>>($"v1/reports/expenses")
+        var url = $"v1/reports/expenses?year={request.Year}&month={request.Month}";
+        return await _client.GetFromJsonAsync<Response<List<ExpensesByCategory>?>>(url)
                ?? new Response<List<ExpensesByCategory>?>(null, 400, "Não foi possível obter os dados");
     }
 
