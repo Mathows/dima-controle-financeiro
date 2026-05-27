@@ -1,6 +1,7 @@
 using Dima.Api.Data;
 using Dima.Api.Handlers;
 using Dima.Api.Models;
+using Dima.Api.Services;
 using Dima.Core;
 using Dima.Core.Handlers;
 using Microsoft.AspNetCore.Identity;
@@ -22,6 +23,8 @@ public static class BuilderExtension
         Configuration.BackendUrl = builder.Configuration.GetValue<string>("BackendUrl") ?? string.Empty;
         Configuration.FrontendUrl = builder.Configuration.GetValue<string>("FrontendUrl") ?? string.Empty;
         ApiConfiguration.StripeApiKey = builder.Configuration.GetValue<string>("StripeApiKey") ?? string.Empty;
+        ApiConfiguration.ResendApiKey = builder.Configuration.GetValue<string>("ResendApiKey") ?? string.Empty;
+        ApiConfiguration.EmailFrom = builder.Configuration.GetValue<string>("EmailFrom") ?? ApiConfiguration.EmailFrom;
 
         StripeConfiguration.ApiKey = ApiConfiguration.StripeApiKey;
     }
@@ -91,5 +94,9 @@ public static class BuilderExtension
         builder
             .Services
             .AddTransient<IStripeHandler, StripeHandler>();
+
+        builder
+            .Services
+            .AddHttpClient<IEmailSender<User>, ResendEmailSender>();
     }
 }
