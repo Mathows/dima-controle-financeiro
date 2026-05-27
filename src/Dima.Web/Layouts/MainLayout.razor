@@ -1,4 +1,4 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
 <MudThemeProvider
     @ref="_mudThemeProvider"
@@ -16,24 +16,33 @@
                     Color="Color.Inherit"
                     Edge="Edge.Start"
                     OnClick="ToggleDrawer"/>
-                Dima
+                <MudText Typo="Typo.h6" Class="ml-2">Dima</MudText>
                 <MudSpacer/>
-                <MudButton Href="/lancamentos/novo" 
-                           Variant="Variant.Text" StartIcon="@Icons.TwoTone.Add">
-                    NOVO LANÇAMENTO
-                </MudButton>
+
+                <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                    <MudButton Href="/lancamentos/novo"
+                               Variant="Variant.Text"
+                               Color="Color.Inherit"
+                               StartIcon="@Icons.Material.Filled.Add">
+                        NOVO LANÇAMENTO
+                    </MudButton>
+                </MudHidden>
+                <MudHidden Breakpoint="Breakpoint.MdAndUp">
+                    <MudIconButton Href="/lancamentos/novo"
+                                   Icon="@Icons.Material.Filled.Add"
+                                   Color="Color.Inherit"
+                                   aria-label="Novo lançamento"/>
+                </MudHidden>
+
                 <MudSpacer/>
-                <MudText Typo="Typo.caption">
-                    @GetGreeting(context.User)
-                </MudText>
                 <MudSwitch
                     Color="Color.Inherit"
                     @bind-Value="@_isDarkMode"
                     T="bool"
-                    Class="ma-4"
+                    Class="ma-2"
                     ThumbIcon="@Icons.TwoTone.Lightbulb"/>
             </MudAppBar>
-            <MudDrawer @bind-Open="@_isDrawerOpened">
+            <MudDrawer @bind-Open="@_isDrawerOpened" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Responsive">
                 <NavMenu/>
             </MudDrawer>
             <MudMainContent>
@@ -53,14 +62,6 @@
     private bool _isDrawerOpened = true;
     private bool _isDarkMode = true;
     private MudThemeProvider _mudThemeProvider = null!;
-
-    private static string GetGreeting(System.Security.Claims.ClaimsPrincipal user)
-    {
-        var firstName = user.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value;
-        return string.IsNullOrWhiteSpace(firstName)
-            ? user.Identity?.Name ?? string.Empty
-            : $"Olá, {firstName}";
-    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

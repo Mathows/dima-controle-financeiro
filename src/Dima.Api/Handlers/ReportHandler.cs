@@ -80,8 +80,11 @@ public class ReportHandler(AppDbContext context) : IReportHandler
 
     public async Task<Response<FinancialSummary?>> GetFinancialSummaryReportAsync(GetFinancialSummaryRequest request)
     {
-        await Task.Delay(3280);
-        var startDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        var year = request.Year ?? DateTime.Now.Year;
+        var month = request.Month ?? DateTime.Now.Month;
+        var startDate = new DateTime(year, month, 1);
+        var endDate = startDate.AddMonths(1).AddTicks(-1);
+
         try
         {
             var data = await context
@@ -90,7 +93,7 @@ public class ReportHandler(AppDbContext context) : IReportHandler
                 .Where(
                     x => x.UserId == request.UserId
                          && x.PaidOrReceivedAt >= startDate
-                         && x.PaidOrReceivedAt <= DateTime.Now
+                         && x.PaidOrReceivedAt <= endDate
                 )
                 .GroupBy(x => 1)
                 .Select(x => new FinancialSummary(

@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Dima.Core.Handlers;
+using Dima.Core.Models.Account;
 using Dima.Core.Requests.Account;
 using Dima.Core.Responses;
 using Dima.Web.Security;
@@ -57,6 +58,56 @@ public class AccountHandler(IHttpClientFactory httpClientFactory, ITokenStorage 
         return result.IsSuccessStatusCode
             ? new Response<string>("Senha redefinida com sucesso!", 200, "Senha redefinida com sucesso!")
             : new Response<string>(null, 400, "Não foi possível redefinir a senha. O código pode estar expirado ou inválido.");
+    }
+
+    public async Task<Response<UserProfile?>> GetProfileAsync()
+    {
+        try
+        {
+            var result = await _client.GetAsync("v1/identity/account/me");
+            if (!result.IsSuccessStatusCode)
+                return new Response<UserProfile?>(null, (int)result.StatusCode, "Não foi possível obter o perfil");
+
+            var response = await result.Content.ReadFromJsonAsync<Response<UserProfile?>>();
+            return response ?? new Response<UserProfile?>(null, 400, "Resposta inválida do servidor");
+        }
+        catch (Exception ex)
+        {
+            return new Response<UserProfile?>(null, 500, ex.Message);
+        }
+    }
+
+    public async Task<Response<UserProfile?>> UpdateProfileAsync(UpdateProfileRequest request)
+    {
+        try
+        {
+            var result = await _client.PutAsJsonAsync("v1/identity/account/profile", request);
+            var response = await result.Content.ReadFromJsonAsync<Response<UserProfile?>>();
+            if (response is null)
+                return new Response<UserProfile?>(null, 400, "Resposta inválida do servidor");
+            return response;
+        }
+        catch (Exception ex)
+        {
+            return new Response<UserProfile?>(null, 500, ex.Message);
+        }
+    }
+
+    public async Task<Response<string>> ChangePasswordAsync(ChangePasswordRequest request)
+    {
+        try
+        {
+            var result = await _client.PostAsJsonAsync("v1/identity/account/change-password", request);
+            if (result.IsSuccessStatusCode)
+                return new Response<string>("ok", 200, "Senha alterada com sucesso");
+
+            var error = await result.Content.ReadFromJsonAsync<Response<string?>>();
+            return new Response<string>(null, 400, error?.Message ?? "Não foi possível alterar a senha");
+        }
+        catch (Exception ex)
+        {
+            return new Response<string>(null, 500, ex.Message);
+        }
     }
 
     public async Task LogoutAsync()
