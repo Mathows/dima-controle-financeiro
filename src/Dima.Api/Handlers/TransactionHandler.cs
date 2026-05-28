@@ -14,20 +14,29 @@ public class TransactionHandler(AppDbContext context) : ITransactionHandler
 {
     public async Task<Response<Transaction?>> CreateAsync(CreateTransactionRequest request)
     {
-        if (request is { Type: ETransactionType.Withdraw, Amount: >= 0 }) 
-            request.Amount *= -1;
-
         try
         {
+            var category = await context.Categories
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == request.CategoryId && c.UserId == request.UserId);
+
+            if (category is null)
+                return new Response<Transaction?>(null, 404, "Categoria não encontrada");
+
+            var type = category.Type;
+            var amount = Math.Abs(request.Amount);
+            if (type == ETransactionType.Withdraw)
+                amount *= -1;
+
             var transaction = new Transaction
             {
                 UserId = request.UserId,
                 CategoryId = request.CategoryId,
                 CreatedAt = DateTime.Now,
-                Amount = request.Amount,
+                Amount = amount,
                 PaidOrReceivedAt = request.PaidOrReceivedAt,
                 Title = request.Title,
-                Type = request.Type
+                Type = type
             };
 
             await context.Transactions.AddAsync(transaction);
@@ -43,9 +52,6 @@ public class TransactionHandler(AppDbContext context) : ITransactionHandler
 
     public async Task<Response<Transaction?>> UpdateAsync(UpdateTransactionRequest request)
     {
-        if (request is { Type: ETransactionType.Withdraw, Amount: >= 0 }) 
-            request.Amount *= -1;
-        
         try
         {
             var transaction = await context
@@ -55,10 +61,22 @@ public class TransactionHandler(AppDbContext context) : ITransactionHandler
             if (transaction is null)
                 return new Response<Transaction?>(null, 404, "Transação não encontrada");
 
+            var category = await context.Categories
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == request.CategoryId && c.UserId == request.UserId);
+
+            if (category is null)
+                return new Response<Transaction?>(null, 404, "Categoria não encontrada");
+
+            var type = category.Type;
+            var amount = Math.Abs(request.Amount);
+            if (type == ETransactionType.Withdraw)
+                amount *= -1;
+
             transaction.CategoryId = request.CategoryId;
-            transaction.Amount = request.Amount;
+            transaction.Amount = amount;
             transaction.Title = request.Title;
-            transaction.Type = request.Type;
+            transaction.Type = type;
             transaction.PaidOrReceivedAt = request.PaidOrReceivedAt;
 
             context.Transactions.Update(transaction);

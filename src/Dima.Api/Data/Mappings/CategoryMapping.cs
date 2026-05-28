@@ -1,3 +1,4 @@
+using Dima.Core.Enums;
 using Dima.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -23,6 +24,11 @@ public class CategoryMapping : IEntityTypeConfiguration<Category>
             .HasColumnType("NVARCHAR")
             .HasMaxLength(255);
         
+        builder.Property(x => x.Type)
+            .IsRequired(true)
+            .HasColumnType("SMALLINT")
+            .HasDefaultValue(ETransactionType.Withdraw);
+
         builder.Property(x => x.UserId)
             .IsRequired(true)
             .HasColumnType("VARCHAR")

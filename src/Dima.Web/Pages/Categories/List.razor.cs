@@ -1,3 +1,4 @@
+using Dima.Core.Enums;
 using Dima.Core.Handlers;
 using Dima.Core.Models;
 using Dima.Core.Requests.Categories;
@@ -13,6 +14,12 @@ public partial class ListCategoriesPage : ComponentBase
     public bool IsBusy { get; set; } = false;
     public List<Category> Categories { get; set; } = [];
     public string SearchTerm { get; set; } = string.Empty;
+
+    public List<Category> IncomeCategories =>
+        Categories.Where(c => c.Type == ETransactionType.Deposit).ToList();
+
+    public List<Category> ExpenseCategories =>
+        Categories.Where(c => c.Type == ETransactionType.Withdraw).ToList();
 
     #endregion
 
