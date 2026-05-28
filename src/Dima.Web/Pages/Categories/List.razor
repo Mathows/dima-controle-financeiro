@@ -19,17 +19,18 @@
     QuickFilter="Filter"
     Hideable="true">
     <ToolBarContent>
-        <MudText Typo="Typo.h6">Categorias</MudText>
+        <MudText Typo="Typo.subtitle1" Style="font-weight: 500;">Categorias</MudText>
         <MudSpacer/>
         <MudTextField
             @bind-Value="SearchTerm"
-            Placeholder="Filtrar..."
-            Adornment="Adornment.Start"
+            Placeholder="Filtrar"
+            Adornment="Adornment.End"
             AdornmentIcon="@Icons.Material.Filled.Search"
             Immediate="true"
-            IconSize="Size.Medium"
-            Class="mt-0">
-        </MudTextField>
+            IconSize="Size.Small"
+            Margin="Margin.Dense"
+            Class="mt-0"
+            Style="max-width: 220px;"/>
     </ToolBarContent>
     <Columns>
         <PropertyColumn Property="x => x.Id" Title="#"/>
