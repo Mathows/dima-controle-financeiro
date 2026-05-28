@@ -1,43 +1,48 @@
 @page "/lancamentos/historico"
 @inherits ListTransactionsPage
 
-<MudText Typo="Typo.h3">Lançamentos</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">Lançamentos</MudText>
 
-<div class="d-flex justify-end mt-4 mb-4">
-    <MudSelect T="int"
-               Label="Mês"
-               @bind-Value="CurrentMonth"
-               AnchorOrigin="Origin.BottomCenter"
-               Class="mr-4">
-        @for (var month = 1; month <= 12; month++)
-        {
-            var date = new DateTime(DateTime.Now.Year, month, 1);
-            <MudSelectItem T="int" Value="@month">
-                @(date.ToString("MMMM"))
-            </MudSelectItem>
-        }
-    </MudSelect>
-    <MudSelect T="int"
-               Label="Ano"
-               @bind-Value="@CurrentYear"
-               AnchorOrigin="Origin.BottomCenter">
-        @foreach (var year in Years)
-        {
-            <MudSelectItem T="int" Value="@year">
-                @year
-            </MudSelectItem>
-        }
-    </MudSelect>
-    <MudSpacer/>
-    <MudButton
-        Size="Size.Small"
-        Variant="Variant.Filled"
-        Color="Color.Primary"
-        StartIcon="@Icons.TwoTone.Search"
-        OnClick="OnSearchAsync">
-        PESQUISAR
-    </MudButton>
-</div>
+<MudGrid Spacing="2" AlignItems="Center.Center" Class="mb-4">
+    <MudItem xs="6" sm="4" md="3">
+        <MudSelect T="int"
+                   Label="Mês"
+                   Dense="true"
+                   Variant="Variant.Outlined"
+                   @bind-Value="CurrentMonth"
+                   AnchorOrigin="Origin.BottomCenter">
+            @for (var month = 1; month <= 12; month++)
+            {
+                var date = new DateTime(DateTime.Now.Year, month, 1);
+                <MudSelectItem T="int" Value="@month">
+                    @(date.ToString("MMMM"))
+                </MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="6" sm="4" md="3">
+        <MudSelect T="int"
+                   Label="Ano"
+                   Dense="true"
+                   Variant="Variant.Outlined"
+                   @bind-Value="@CurrentYear"
+                   AnchorOrigin="Origin.BottomCenter">
+            @foreach (var year in Years)
+            {
+                <MudSelectItem T="int" Value="@year">@year</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" sm="4" md="6" Class="d-flex justify-end">
+        <MudButton FullWidth="false"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Search"
+                   OnClick="OnSearchAsync">
+            PESQUISAR
+        </MudButton>
+    </MudItem>
+</MudGrid>
 
 <MudDataGrid
     Items="@Transactions"
