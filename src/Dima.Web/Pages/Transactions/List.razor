@@ -51,15 +51,17 @@
     Hideable="true"
     ColumnResizeMode="ResizeMode.Column">
     <ToolBarContent>
-        <MudText Typo="Typo.h6">Lançamentos</MudText>
+        <MudText Typo="Typo.subtitle1" Style="font-weight: 500;">Lançamentos</MudText>
         <MudSpacer/>
         <MudTextField @bind-Value="SearchTerm"
-                      Placeholder="Filtrar..."
-                      Adornment="Adornment.Start"
+                      Placeholder="Filtrar"
+                      Adornment="Adornment.End"
                       AdornmentIcon="@Icons.Material.Filled.Search"
                       Immediate="true"
-                      IconSize="Size.Medium"
-                      Class="mt-0"/>
+                      IconSize="Size.Small"
+                      Margin="Margin.Dense"
+                      Class="mt-0"
+                      Style="max-width: 220px;"/>
     </ToolBarContent>
     <Columns>
         <PropertyColumn Property="x => x.Title" Title="Lançamento"/>
