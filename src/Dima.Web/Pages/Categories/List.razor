@@ -12,45 +12,68 @@
     </MudButton>
 </div>
 
-<MudDataGrid
-    Class="mt-4"
-    Items="@Categories"
-    Filterable="true"
-    QuickFilter="Filter"
-    Hideable="true">
-    <ToolBarContent>
-        <MudText Typo="Typo.subtitle1" Style="font-weight: 500;">Categorias</MudText>
-        <MudSpacer/>
-        <MudTextField
-            @bind-Value="SearchTerm"
-            Placeholder="Filtrar"
-            Adornment="Adornment.End"
-            AdornmentIcon="@Icons.Material.Filled.Search"
-            Immediate="true"
-            IconSize="Size.Small"
-            Margin="Margin.Dense"
-            Class="mt-0"
-            Style="max-width: 220px;"/>
-    </ToolBarContent>
-    <Columns>
-        <PropertyColumn Property="x => x.Id" Title="#"/>
-        <PropertyColumn Property="x => x.Title" Title="Categoria"/>
-        <TemplateColumn Class="d-flex justify-end">
-            <CellTemplate>
-                <MudStack Row>
-                    <MudIconButton 
-                        Icon="@Icons.Material.Filled.Edit"
-                        Href="@($"/categorias/editar/{context.Item.Id}")"
-                        Color="Color.Primary">
-                    </MudIconButton>
-                    <MudIconButton 
-                        Icon="@Icons.Material.Filled.Delete"
-                        Color="Color.Error"
-                        aria-label="Excluir"
-                        OnClick="() => OnDeleteButtonClickedAsync(context.Item.Id, context.Item.Title)">
-                    </MudIconButton>
-                </MudStack>
-            </CellTemplate>
-        </TemplateColumn>
-    </Columns>
-</MudDataGrid>
+<MudTabs Rounded="true" Color="Color.Primary" PanelClass="pa-0 pt-4">
+    <MudTabPanel Text="@($"Entradas ({IncomeCategories.Count})")" Icon="@Icons.Material.Outlined.TrendingUp">
+        @RenderCategoryGrid(IncomeCategories, "Sem categorias de entrada cadastradas.")
+    </MudTabPanel>
+    <MudTabPanel Text="@($"Saídas ({ExpenseCategories.Count})")" Icon="@Icons.Material.Outlined.TrendingDown">
+        @RenderCategoryGrid(ExpenseCategories, "Sem categorias de saída cadastradas.")
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+    private RenderFragment RenderCategoryGrid(List<Dima.Core.Models.Category> items, string emptyMessage) => __builder =>
+    {
+        if (items.Count == 0)
+        {
+            <div class="d-flex flex-column align-center pa-8" style="opacity:.6;">
+                <MudIcon Icon="@Icons.Material.Outlined.Category" Size="Size.Large"/>
+                <MudText Typo="Typo.body2" Class="mt-2">@emptyMessage</MudText>
+                <MudButton Href="/categorias/adicionar"
+                           Variant="Variant.Text"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           Class="mt-2">
+                    Nova categoria
+                </MudButton>
+            </div>
+        }
+        else
+        {
+            <MudDataGrid Items="@items"
+                         Filterable="true"
+                         QuickFilter="Filter"
+                         Hideable="true">
+                <ToolBarContent>
+                    <MudSpacer/>
+                    <MudTextField @bind-Value="SearchTerm"
+                                  Placeholder="Filtrar"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Immediate="true"
+                                  IconSize="Size.Small"
+                                  Margin="Margin.Dense"
+                                  Class="mt-0"
+                                  Style="max-width: 220px;"/>
+                </ToolBarContent>
+                <Columns>
+                    <PropertyColumn Property="x => x.Id" Title="#"/>
+                    <PropertyColumn Property="x => x.Title" Title="Categoria"/>
+                    <TemplateColumn Class="d-flex justify-end">
+                        <CellTemplate>
+                            <MudStack Row>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                               Href="@($"/categorias/editar/{context.Item.Id}")"
+                                               Color="Color.Primary"/>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Color="Color.Error"
+                                               aria-label="Excluir"
+                                               OnClick="() => OnDeleteButtonClickedAsync(context.Item.Id, context.Item.Title)"/>
+                            </MudStack>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+            </MudDataGrid>
+        }
+    };
+}

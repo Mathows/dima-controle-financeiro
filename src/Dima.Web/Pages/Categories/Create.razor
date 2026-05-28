@@ -11,16 +11,40 @@
                       @bind-Value="InputModel.Title"
                       For="@(() => InputModel.Title)"/>
 
-        <MudTextField Label="Descição"
-                      Lines="5"
+        <MudTextField Label="Descrição"
+                      Lines="3"
                       HelperText="Campo obrigatório"
                       @bind-Value="InputModel.Description"
-                      For="@(() => InputModel.Description)"/>
+                      For="@(() => InputModel.Description)"
+                      Class="mt-2"/>
 
-        <MudButton ButtonType="ButtonType.Submit"
-                   Variant="Variant.Filled"
-                   Color="Color.Primary">
-            Salvar
-        </MudButton>
+        <MudText Typo="Typo.body2" Class="mt-4 mb-1">Tipo</MudText>
+        <MudRadioGroup T="ETransactionType" @bind-Value="InputModel.Type">
+            <MudRadio T="ETransactionType" Value="ETransactionType.Deposit" Color="Color.Success">
+                Entrada
+            </MudRadio>
+            <MudRadio T="ETransactionType" Value="ETransactionType.Withdraw" Color="Color.Error">
+                Saída
+            </MudRadio>
+        </MudRadioGroup>
+
+        <div class="d-flex justify-end mt-6">
+            <MudButton Href="/categorias" Variant="Variant.Text" Class="mr-2">
+                Cancelar
+            </MudButton>
+            @if (IsBusy)
+            {
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+            }
+            else
+            {
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Save">
+                    Salvar
+                </MudButton>
+            }
+        </div>
     </EditForm>
 </MudPaper>
