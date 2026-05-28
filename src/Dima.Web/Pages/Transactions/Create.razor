@@ -45,6 +45,7 @@
                    Label="Categoria"
                    @bind-Value="InputModel.CategoryId"
                    AnchorOrigin="Origin.BottomCenter"
+                   ToStringFunc="@(id => Categories.FirstOrDefault(c => c.Id == id)?.Title ?? string.Empty)"
                    Class="mt-2">
             @foreach (var category in Categories)
             {
