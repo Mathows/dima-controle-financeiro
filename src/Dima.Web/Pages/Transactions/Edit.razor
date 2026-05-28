@@ -28,21 +28,9 @@
                        Editable="true"
                        Class="mt-2"/>
 
-        <MudSelect T="ETransactionType"
-                   Label="Tipo de Movimentação"
-                   AnchorOrigin="Origin.BottomCenter"
-                   @bind-Value="InputModel.Type"
-                   Class="mt-2">
-            <MudSelectItem T="ETransactionType" Value="ETransactionType.Deposit">
-                Entrada
-            </MudSelectItem>
-            <MudSelectItem T="ETransactionType" Value="ETransactionType.Withdraw">
-                Saída
-            </MudSelectItem>
-        </MudSelect>
-
         <MudSelect T="long"
                    Label="Categoria"
+                   HelperText="O tipo (entrada/saída) é determinado pela categoria"
                    @bind-Value="InputModel.CategoryId"
                    AnchorOrigin="Origin.BottomCenter"
                    ToStringFunc="@(id => Categories.FirstOrDefault(c => c.Id == id)?.Title ?? string.Empty)"
@@ -50,7 +38,12 @@
             @foreach (var category in Categories)
             {
                 <MudSelectItem T="long" Value="@category.Id">
-                    @category.Title
+                    <div class="d-flex align-center" style="gap: 8px;">
+                        <MudIcon Icon="@(category.Type == ETransactionType.Deposit ? Icons.Material.Filled.ArrowUpward : Icons.Material.Filled.ArrowDownward)"
+                                 Color="@(category.Type == ETransactionType.Deposit ? Color.Success : Color.Error)"
+                                 Size="Size.Small"/>
+                        @category.Title
+                    </div>
                 </MudSelectItem>
             }
         </MudSelect>

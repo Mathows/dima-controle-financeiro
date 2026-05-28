@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Dima.Core.Enums;
 
 namespace Dima.Core.Requests.Categories;
 
@@ -12,4 +13,7 @@ public class UpdateCategoryRequest : Request
 
     [Required(ErrorMessage = "Descrição inválida")]
     public string? Description { get; set; }
+
+    [Required(ErrorMessage = "Tipo inválido")]
+    public ETransactionType Type { get; set; } = ETransactionType.Withdraw;
 }

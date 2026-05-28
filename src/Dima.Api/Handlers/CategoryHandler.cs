@@ -17,7 +17,8 @@ public class CategoryHandler(AppDbContext context) : ICategoryHandler
             {
                 UserId = request.UserId,
                 Title = request.Title,
-                Description = request.Description
+                Description = request.Description,
+                Type = request.Type
             };
 
             await context.Categories.AddAsync(category);
@@ -44,6 +45,7 @@ public class CategoryHandler(AppDbContext context) : ICategoryHandler
 
             category.Title = request.Title;
             category.Description = request.Description;
+            category.Type = request.Type;
 
             context.Categories.Update(category);
             await context.SaveChangesAsync();
