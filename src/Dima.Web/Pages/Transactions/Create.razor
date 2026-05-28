@@ -1,9 +1,9 @@
 @page "/lancamentos/novo"
 @inherits CreateTransactionPage
 
-<MudText Typo="Typo.h3">Novo Lançamento</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">Novo Lançamento</MudText>
 
-<MudPaper Class="pa-8 mt-4">
+<MudPaper Class="pa-4 pa-sm-8 mt-4">
     <EditForm Model="@InputModel" OnValidSubmit="OnValidSubmitAsync">
         <DataAnnotationsValidator/>
 
@@ -18,16 +18,21 @@
                       Variant="Variant.Text"
                       HelperText="Informe o valor que será pago ou recebido"
                       @bind-Value="InputModel.Amount"
-                      For="@(() => InputModel.Amount)"/>
+                      For="@(() => InputModel.Amount)"
+                      Class="mt-2"/>
 
         <MudDatePicker Label="Quando?"
                        @bind-Date="@InputModel.PaidOrReceivedAt"
-                       HelperText="Selecione a data que o valor será pago ou recebido"/>
-        
+                       HelperText="Selecione a data que o valor será pago ou recebido"
+                       PickerVariant="PickerVariant.Dialog"
+                       Editable="true"
+                       Class="mt-2"/>
+
         <MudSelect T="ETransactionType"
                    Label="Tipo de Movimentação"
                    AnchorOrigin="Origin.BottomCenter"
-                   @bind-Value="InputModel.Type">
+                   @bind-Value="InputModel.Type"
+                   Class="mt-2">
             <MudSelectItem T="ETransactionType" Value="ETransactionType.Deposit">
                 Entrada
             </MudSelectItem>
@@ -35,12 +40,12 @@
                 Saída
             </MudSelectItem>
         </MudSelect>
-        
-        <MudSelect 
-            T="long" 
-            Label="Categoria" 
-            @bind-Value="InputModel.CategoryId"
-            AnchorOrigin="Origin.BottomCenter">
+
+        <MudSelect T="long"
+                   Label="Categoria"
+                   @bind-Value="InputModel.CategoryId"
+                   AnchorOrigin="Origin.BottomCenter"
+                   Class="mt-2">
             @foreach (var category in Categories)
             {
                 <MudSelectItem T="long" Value="@category.Id">
@@ -48,12 +53,17 @@
                 </MudSelectItem>
             }
         </MudSelect>
-        
-        <MudButton ButtonType="ButtonType.Submit"
-                   Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   Class="mt-4">
-            Salvar
-        </MudButton>
+
+        <div class="d-flex justify-end mt-6">
+            <MudButton Href="/lancamentos/historico" Variant="Variant.Text" Class="mr-2">
+                Cancelar
+            </MudButton>
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Save">
+                Salvar
+            </MudButton>
+        </div>
     </EditForm>
 </MudPaper>

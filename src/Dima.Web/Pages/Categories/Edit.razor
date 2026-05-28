@@ -1,10 +1,10 @@
 @page "/categorias/editar/{id}"
 @inherits EditCategoryPage
 
-<MudText Typo="Typo.h3">Editar Categoria</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">Editar Categoria</MudText>
 @if (IsBusy)
 {
-    <MudPaper Class="pa-8 mt-4">
+    <MudPaper Class="pa-4 pa-sm-8 mt-4">
         <MudSkeleton Height="55px"/>
         <MudSkeleton Height="110px"/>
         <MudSkeleton Height="55px"/>
@@ -14,7 +14,7 @@
 }
 else
 {
-    <MudPaper Class="pa-8 mt-4">
+    <MudPaper Class="pa-4 pa-sm-8 mt-4">
         <EditForm Model="@InputModel" OnValidSubmit="OnValidSubmitAsync">
             <DataAnnotationsValidator/>
 
