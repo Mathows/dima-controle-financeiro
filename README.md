@@ -1,13 +1,12 @@
 # Dima — Controle Financeiro
 
-Aplicação **fullstack + mobile** de controle financeiro pessoal. Permite ao usuário cadastrar categorias, registrar entradas e saídas, visualizar um dashboard com resumo financeiro, gráficos por mês e por categoria, além de um fluxo Premium integrado com **Stripe**.
+Aplicação fullstack de controle financeiro pessoal. Permite ao usuário cadastrar categorias, registrar entradas e saídas, visualizar um dashboard com resumo financeiro, gráficos por mês e por categoria, além de um fluxo Premium integrado com **Stripe**.
 
-Disponível em **3 frentes**:
 - 🌐 **Web** (Blazor WebAssembly) — em produção no Azure Static Web Apps
-- 📱 **Mobile** (.NET MAUI Blazor Hybrid) — Android / iOS / Windows / macOS
 - 🔌 **API REST** (.NET 8) — em produção no Azure App Service
+- 📱 **Mobile** (.NET MAUI Blazor Hybrid) — projeto incluído como exercício arquitetural, reaproveita 100% do `Dima.Core`
 
-> ⚠️ Este projeto foi construído a partir do curso **[Fullstack .NET](https://balta.io/cursos/fullstack-net)** do [balta.io](https://balta.io), ministrado por [André Baltieri](https://github.com/andrebaltieri). Foi adaptado, corrigido (alguns bugs do código original), expandido com várias features novas e publicado em meu portfólio como exercício prático.
+> Projeto baseado no curso **Full Stack .NET** ministrado por [André Baltieri](https://github.com/andrebaltieri) ([balta.io](https://balta.io)).
 
 ---
 
@@ -15,7 +14,6 @@ Disponível em **3 frentes**:
 
 - **Web em produção**: https://black-sand-042c6dc03.7.azurestaticapps.net
 - **API em produção**: https://dima-api-matheus.azurewebsites.net
-- **APK Android**: [Download v1.0.0](https://github.com/Mathows/dima-controle-financeiro/releases/tag/v1.0.0) (31 MB)
 
 ---
 
@@ -166,9 +164,9 @@ dotnet run -f net9.0-android
 
 ---
 
-## 📱 Versão mobile (.NET MAUI)
+## 📱 Versão mobile (.NET MAUI Blazor Hybrid)
 
-O `Dima.Mobile` é um app **.NET MAUI Blazor Hybrid** que consome a mesma API publicada no Azure. Possui:
+O `Dima.Mobile` é um app **.NET MAUI Blazor Hybrid** que consome a mesma API publicada no Azure. Foi construído como **exercício arquitetural** para validar o reaproveitamento do `Dima.Core` entre Web (Blazor WASM) e Mobile (MAUI). Possui:
 
 - Login + Esqueci senha
 - Dashboard com seletor de período + 3 gráficos
@@ -178,11 +176,7 @@ O `Dima.Mobile` é um app **.NET MAUI Blazor Hybrid** que consome a mesma API pu
 
 Tokens JWT são guardados em **SecureStorage** (criptografados pelo Android Keystore / iOS Keychain / Windows DPAPI).
 
-### Instalar no Android
-1. Baixe o APK na aba [Releases](https://github.com/Mathows/dima-controle-financeiro/releases/tag/v1.0.0)
-2. No celular Android: Configurações → Segurança → permitir "Fontes desconhecidas"
-3. Abra o APK pelo gerenciador de arquivos e instale
-4. Use a **mesma conta** da versão web
+> **Nota**: O foco do projeto é a versão web em produção. O Mobile está incluído como demonstração de arquitetura compartilhada (Core reaproveitado entre frontends). Para experimentar, é necessário compilar localmente — basta seguir as instruções acima.
 
 ---
 
@@ -200,26 +194,27 @@ Custo total: **R$ 0/mês**.
 
 ---
 
-## 🔧 Customizações em relação ao curso original
+## 🚀 O que foi adicionado além do curso
 
-Algumas evoluções que fiz no projeto-base do balta:
-
-- ✅ **Migração de cookies para JWT Bearer** — browsers modernos bloqueiam cookies cross-site, impossibilitando autenticação entre web e API hospedados em domínios diferentes
-- ✅ **Reset de senha real** — implementado `IEmailSender<User>` integrado com Resend
-- ✅ **Categoria com tipo** (Entrada/Saída) — escolhe a categoria e o tipo do lançamento vem junto, eliminando o campo "Tipo" no formulário
-- ✅ **Dashboard com filtro de mês/ano** em todos os componentes (resumo, lançamentos, gráficos)
-- ✅ **Mobile-first responsivo** com ajustes em datepicker, gráficos pies e gráficos bar
-- ✅ **App MAUI Blazor Hybrid** (Android/iOS/Windows/macOS) consumindo a mesma API
-- ✅ **Deploy real no Azure com CI/CD** (GitHub Actions) — não coberto no curso
-- ✅ **Bug fixes diversos** do código original (links duplicados, spinner eterno, gráficos cortando labels, etc.)
+| Área | Curso original | Esta versão |
+|---|---|---|
+| **Deploy** | Localhost | Em produção no Azure (App Service + Static Web Apps + SQL Free) |
+| **CI/CD** | — | GitHub Actions com deploy automático a cada PR mergeado |
+| **Autenticação** | Cookies | JWT Bearer (resolve bloqueio cross-site de browsers modernos) |
+| **Reset de senha** | Sem envio de e-mail | Integrado com Resend, e-mail HTML funcionando |
+| **Cadastro** | E-mail + senha | + Nome e Sobrenome com claims `GivenName`/`Surname` |
+| **Categoria** | Apenas título e descrição | + Tipo (Entrada/Saída) → simplifica criação de lançamentos |
+| **Dashboard** | Mês corrente fixo | Seletor de mês/ano em todos os componentes |
+| **Lista de lançamentos** | Não havia no dashboard | Card novo mostrando transações do período |
+| **Gráfico mensal** | Line chart | Bar chart com labels formatados (1K, 2K) |
+| **Plataformas** | Web only | + Projeto Mobile (.NET MAUI Blazor Hybrid) reaproveitando `Dima.Core` |
+| **Documentação** | Intro do curso | README completo: arquitetura, deploy, instruções mobile |
 
 ---
 
 ## 🙏 Créditos
 
-Projeto baseado no curso **[Fullstack .NET](https://balta.io/cursos/fullstack-net)** do [balta.io](https://balta.io), ministrado por [André Baltieri](https://github.com/andrebaltieri) (11x Microsoft MVP).
-
-Repositório original do curso: https://github.com/balta-io/3054
+Projeto baseado no curso **Full Stack .NET** ministrado por [André Baltieri](https://github.com/andrebaltieri) ([balta.io](https://balta.io)).
 
 ---
 
