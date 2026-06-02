@@ -15,7 +15,7 @@ Disponível em **3 frentes**:
 
 - **Web em produção**: https://black-sand-042c6dc03.7.azurestaticapps.net
 - **API em produção**: https://dima-api-matheus.azurewebsites.net
-- **APK Android**: veja [GitHub Releases](https://github.com/Mathows/dima-controle-financeiro/releases) (em breve)
+- **APK Android**: [Download v1.0.0](https://github.com/Mathows/dima-controle-financeiro/releases/tag/v1.0.0) (31 MB)
 
 ---
 
@@ -179,7 +179,7 @@ O `Dima.Mobile` é um app **.NET MAUI Blazor Hybrid** que consome a mesma API pu
 Tokens JWT são guardados em **SecureStorage** (criptografados pelo Android Keystore / iOS Keychain / Windows DPAPI).
 
 ### Instalar no Android
-1. Baixe o APK na aba [Releases](https://github.com/Mathows/dima-controle-financeiro/releases) (em breve)
+1. Baixe o APK na aba [Releases](https://github.com/Mathows/dima-controle-financeiro/releases/tag/v1.0.0)
 2. No celular Android: Configurações → Segurança → permitir "Fontes desconhecidas"
 3. Abra o APK pelo gerenciador de arquivos e instale
 4. Use a **mesma conta** da versão web
