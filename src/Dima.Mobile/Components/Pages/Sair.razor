@@ -1,0 +1,17 @@
+@page "/sair"
+@using Dima.Core.Handlers
+@inject IAccountHandler Handler
+@inject NavigationManager Navigation
+
+<div class="d-flex flex-column align-center pa-8">
+    <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+    <MudText Class="mt-3">Saindo...</MudText>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Handler.LogoutAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+}
