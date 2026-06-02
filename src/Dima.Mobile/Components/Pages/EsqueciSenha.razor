@@ -1,0 +1,108 @@
+@page "/esqueci-senha"
+@layout EmptyLayout
+@using Dima.Core.Handlers
+@using Dima.Core.Requests.Account
+@inject IAccountHandler Handler
+@inject NavigationManager Navigation
+
+<div class="d-flex flex-column align-center justify-center" style="min-height: 100vh; padding: 24px;">
+    <MudPaper Class="pa-6 mud-width-full" MaxWidth="400px" Elevation="4">
+        <div class="d-flex flex-column align-center pb-4">
+            <MudAvatar Color="Color.Primary" Size="Size.Large" Class="mb-2">D</MudAvatar>
+            <MudText Typo="Typo.h5">Esqueceu sua senha?</MudText>
+            <MudText Typo="Typo.body2" Align="Align.Center" Style="opacity:.7;">
+                Informe o e-mail da sua conta e enviaremos um link para criar uma nova senha.
+            </MudText>
+        </div>
+
+        @if (SubmissionDone)
+        {
+            <MudAlert Severity="Severity.Success" Class="my-2" Dense="true">
+                Se este e-mail estiver cadastrado, você receberá em instantes uma mensagem com instruções. Confira também a caixa de spam.
+            </MudAlert>
+
+            <div class="mt-4">
+                <MudButton Href="/login" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">
+                    Voltar para o login
+                </MudButton>
+            </div>
+        }
+        else
+        {
+            <MudTextField T="string"
+                          Label="E-mail"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Email"
+                          Immediate="true"
+                          DebounceInterval="0"
+                          Value="@Email"
+                          ValueChanged="@((string v) => Email = v ?? string.Empty)"/>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-3" Dense="true">@ErrorMessage</MudAlert>
+            }
+
+            <div class="mt-6">
+                @if (IsBusy)
+                {
+                    <div class="d-flex justify-center">
+                        <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+                    </div>
+                }
+                else
+                {
+                    <MudButton OnClick="OnSubmitAsync"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               FullWidth="true"
+                               Size="Size.Large"
+                               Disabled="@string.IsNullOrWhiteSpace(Email)">
+                        ENVIAR LINK
+                    </MudButton>
+                    <MudButton Href="/login"
+                               Variant="Variant.Text"
+                               FullWidth="true"
+                               Class="mt-2">
+                        Cancelar
+                    </MudButton>
+                }
+            </div>
+        }
+    </MudPaper>
+</div>
+
+@code {
+    public bool IsBusy { get; set; }
+    public bool SubmissionDone { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string? ErrorMessage { get; set; }
+
+    private async Task OnSubmitAsync()
+    {
+        ErrorMessage = null;
+        if (string.IsNullOrWhiteSpace(Email))
+        {
+            ErrorMessage = "Preencha o e-mail";
+            return;
+        }
+
+        IsBusy = true;
+        StateHasChanged();
+
+        try
+        {
+            var request = new ForgotPasswordRequest { Email = Email };
+            await Handler.ForgotPasswordAsync(request);
+            SubmissionDone = true;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+}

@@ -1,0 +1,151 @@
+@page "/categorias"
+@using Dima.Core.Handlers
+@using Dima.Core.Models
+@using Dima.Core.Requests.Categories
+@using Dima.Mobile.Security
+@inject ICategoryHandler CategoryHandler
+@inject ITokenStorage TokenStorage
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<div class="d-flex justify-space-between align-center mb-3">
+    <MudText Typo="Typo.h5">Categorias</MudText>
+    <MudIconButton Icon="@Icons.Material.Filled.Add"
+                   Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   Href="/categorias/novo"
+                   aria-label="Nova categoria"/>
+</div>
+
+@if (IsLoading)
+{
+    <div class="d-flex justify-center pa-8">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+    </div>
+}
+else
+{
+    <MudTabs Rounded="true" Color="Color.Primary" PanelClass="pt-2">
+        <MudTabPanel Text="@($"Entradas ({IncomeCategories.Count})")" Icon="@Icons.Material.Outlined.TrendingUp">
+            @RenderList(IncomeCategories, "Sem categorias de entrada.")
+        </MudTabPanel>
+        <MudTabPanel Text="@($"Saídas ({ExpenseCategories.Count})")" Icon="@Icons.Material.Outlined.TrendingDown">
+            @RenderList(ExpenseCategories, "Sem categorias de saída.")
+        </MudTabPanel>
+    </MudTabs>
+}
+
+@code {
+    private RenderFragment RenderList(List<Category> items, string emptyText) => __builder =>
+    {
+        if (items.Count == 0)
+        {
+            <div class="d-flex flex-column align-center pa-6" style="opacity:.6;">
+                <MudIcon Icon="@Icons.Material.Outlined.Category" Size="Size.Large"/>
+                <MudText Typo="Typo.body2" Class="mt-2">@emptyText</MudText>
+            </div>
+        }
+        else
+        {
+            <MudList T="Category" Dense="true" Class="pa-0">
+                @foreach (var c in items.OrderBy(x => x.Title))
+                {
+                    <MudListItem T="Category" Class="px-2">
+                        <div class="d-flex align-center" style="width: 100%; gap: 8px;">
+                            <MudIcon Icon="@Icons.Material.Outlined.Folder"
+                                     Color="@(c.Type == ETransactionType.Deposit ? Color.Success : Color.Error)"/>
+                            <div style="flex-grow: 1; min-width: 0;">
+                                <MudText Typo="Typo.body2" Style="font-weight: 500;">@c.Title</MudText>
+                                @if (!string.IsNullOrWhiteSpace(c.Description))
+                                {
+                                    <MudText Typo="Typo.caption" Style="opacity:.7;">@c.Description</MudText>
+                                }
+                            </div>
+                            <MudIconButton Icon="@Icons.Material.Outlined.Edit"
+                                           Size="Size.Small"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => Navigation.NavigateTo($"/categorias/editar/{c.Id}"))"
+                                           aria-label="Editar"/>
+                            <MudIconButton Icon="@Icons.Material.Outlined.Delete"
+                                           Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => OnDeleteAsync(c))"
+                                           aria-label="Excluir"/>
+                        </div>
+                    </MudListItem>
+                    <MudDivider/>
+                }
+            </MudList>
+        }
+    };
+
+    public bool IsLoading { get; set; } = true;
+    public List<Category> Categories { get; set; } = [];
+
+    public List<Category> IncomeCategories =>
+        Categories.Where(c => c.Type == ETransactionType.Deposit).ToList();
+
+    public List<Category> ExpenseCategories =>
+        Categories.Where(c => c.Type == ETransactionType.Withdraw).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await TokenStorage.GetAccessTokenAsync();
+        if (string.IsNullOrEmpty(token))
+        {
+            Navigation.NavigateTo("/login", forceLoad: true);
+            return;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            var result = await CategoryHandler.GetAllAsync(new GetAllCategoriesRequest());
+            Categories = result.IsSuccess ? result.Data ?? [] : [];
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task OnDeleteAsync(Category c)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Excluir categoria?",
+            $"\"{c.Title}\" será excluída. Esta ação é irreversível.",
+            yesText: "Excluir",
+            cancelText: "Cancelar");
+
+        if (result is true)
+        {
+            try
+            {
+                var del = await CategoryHandler.DeleteAsync(new DeleteCategoryRequest { Id = c.Id });
+                if (del.IsSuccess)
+                {
+                    Snackbar.Add("Categoria excluída", Severity.Success);
+                    Categories.RemoveAll(x => x.Id == c.Id);
+                }
+                else
+                {
+                    Snackbar.Add(del.Message ?? "Falha ao excluir", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+        }
+    }
+}

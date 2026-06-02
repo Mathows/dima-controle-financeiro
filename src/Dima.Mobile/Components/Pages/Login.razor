@@ -33,6 +33,10 @@
                       ValueChanged="@((string v) => Password = v ?? string.Empty)"
                       Class="mt-3"/>
 
+        <div class="d-flex justify-end mt-2">
+            <MudLink Href="/esqueci-senha" Typo="Typo.body2">Esqueci minha senha</MudLink>
+        </div>
+
         @if (!string.IsNullOrEmpty(ErrorMessage))
         {
             <MudAlert Severity="Severity.Error" Class="mt-3" Dense="true">
