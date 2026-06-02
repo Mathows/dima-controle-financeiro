@@ -1,0 +1,223 @@
+@page "/lancamentos/novo"
+@page "/lancamentos/editar/{Id}"
+@using Dima.Core.Handlers
+@using Dima.Core.Models
+@using Dima.Core.Requests.Categories
+@using Dima.Core.Requests.Transactions
+@using Dima.Mobile.Security
+@inject ITransactionHandler TransactionHandler
+@inject ICategoryHandler CategoryHandler
+@inject ITokenStorage TokenStorage
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h5" Class="mb-4">@(IsEdit ? "Editar Lançamento" : "Novo Lançamento")</MudText>
+
+@if (IsLoading)
+{
+    <div class="d-flex justify-center pa-8">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+    </div>
+}
+else
+{
+    <MudTextField T="string"
+                  Label="Título"
+                  Variant="Variant.Outlined"
+                  Immediate="true"
+                  DebounceInterval="0"
+                  Value="@Title"
+                  ValueChanged="@((string v) => Title = v ?? string.Empty)"/>
+
+    <MudTextField T="decimal"
+                  Label="Valor"
+                  Variant="Variant.Outlined"
+                  Format="C"
+                  Immediate="true"
+                  DebounceInterval="0"
+                  Value="@Amount"
+                  ValueChanged="@((decimal v) => Amount = Math.Abs(v))"
+                  Class="mt-3"/>
+
+    <MudDatePicker Label="Data"
+                   Variant="Variant.Outlined"
+                   Date="@PaidOrReceivedAt"
+                   DateChanged="@((DateTime? d) => PaidOrReceivedAt = d)"
+                   PickerVariant="PickerVariant.Dialog"
+                   Editable="true"
+                   Class="mt-3"/>
+
+    <MudSelect T="long"
+               Label="Categoria"
+               Variant="Variant.Outlined"
+               Value="@CategoryId"
+               ValueChanged="@((long v) => CategoryId = v)"
+               ToStringFunc="@(id => Categories.FirstOrDefault(c => c.Id == id)?.Title ?? string.Empty)"
+               HelperText="O tipo (entrada/saída) é determinado pela categoria"
+               Class="mt-3">
+        @foreach (var category in Categories)
+        {
+            <MudSelectItem T="long" Value="@category.Id">
+                <div class="d-flex align-center" style="gap: 8px;">
+                    <MudIcon Icon="@(category.Type == ETransactionType.Deposit ? Icons.Material.Filled.ArrowUpward : Icons.Material.Filled.ArrowDownward)"
+                             Color="@(category.Type == ETransactionType.Deposit ? Color.Success : Color.Error)"
+                             Size="Size.Small"/>
+                    @category.Title
+                </div>
+            </MudSelectItem>
+        }
+    </MudSelect>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-3" Dense="true">@ErrorMessage</MudAlert>
+    }
+
+    <div class="d-flex justify-end mt-6" style="gap: 8px;">
+        <MudButton Href="/lancamentos" Variant="Variant.Text">Cancelar</MudButton>
+        @if (IsSaving)
+        {
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+        }
+        else
+        {
+            <MudButton OnClick="OnSubmitAsync"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Save"
+                       Disabled="@(string.IsNullOrWhiteSpace(Title) || CategoryId == 0)">
+                SALVAR
+            </MudButton>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string? Id { get; set; }
+
+    public bool IsEdit => !string.IsNullOrEmpty(Id);
+
+    public bool IsLoading { get; set; } = true;
+    public bool IsSaving { get; set; }
+
+    public string Title { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public DateTime? PaidOrReceivedAt { get; set; } = DateTime.Now;
+    public long CategoryId { get; set; }
+    public List<Category> Categories { get; set; } = [];
+    public string? ErrorMessage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await TokenStorage.GetAccessTokenAsync();
+        if (string.IsNullOrEmpty(token))
+        {
+            Navigation.NavigateTo("/login", forceLoad: true);
+            return;
+        }
+
+        try
+        {
+            var catResult = await CategoryHandler.GetAllAsync(new GetAllCategoriesRequest());
+            Categories = catResult.IsSuccess ? catResult.Data ?? [] : [];
+
+            if (IsEdit && long.TryParse(Id, out var transactionId))
+            {
+                var trResult = await TransactionHandler.GetByIdAsync(new GetTransactionByIdRequest { Id = transactionId });
+                if (trResult.IsSuccess && trResult.Data is not null)
+                {
+                    var t = trResult.Data;
+                    Title = t.Title;
+                    Amount = Math.Abs(t.Amount);
+                    PaidOrReceivedAt = t.PaidOrReceivedAt;
+                    CategoryId = t.CategoryId;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task OnSubmitAsync()
+    {
+        ErrorMessage = null;
+
+        if (CategoryId == 0)
+        {
+            ErrorMessage = "Selecione uma categoria";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(Title))
+        {
+            ErrorMessage = "Preencha o título";
+            return;
+        }
+        if (PaidOrReceivedAt is null)
+        {
+            ErrorMessage = "Selecione uma data";
+            return;
+        }
+
+        IsSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            if (IsEdit && long.TryParse(Id, out var id))
+            {
+                var request = new UpdateTransactionRequest
+                {
+                    Id = id,
+                    Title = Title,
+                    Amount = Amount,
+                    CategoryId = CategoryId,
+                    PaidOrReceivedAt = PaidOrReceivedAt
+                };
+                var result = await TransactionHandler.UpdateAsync(request);
+                if (result.IsSuccess)
+                {
+                    Snackbar.Add("Lançamento atualizado!", Severity.Success);
+                    Navigation.NavigateTo("/lancamentos");
+                }
+                else
+                {
+                    ErrorMessage = result.Message ?? "Falha ao atualizar";
+                }
+            }
+            else
+            {
+                var request = new CreateTransactionRequest
+                {
+                    Title = Title,
+                    Amount = Amount,
+                    CategoryId = CategoryId,
+                    PaidOrReceivedAt = PaidOrReceivedAt
+                };
+                var result = await TransactionHandler.CreateAsync(request);
+                if (result.IsSuccess)
+                {
+                    Snackbar.Add("Lançamento criado!", Severity.Success);
+                    Navigation.NavigateTo("/lancamentos");
+                }
+                else
+                {
+                    ErrorMessage = result.Message ?? "Falha ao criar";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+}
