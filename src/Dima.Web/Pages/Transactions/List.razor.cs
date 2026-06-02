@@ -1,7 +1,9 @@
 using Dima.Core.Common.Extensions;
+using Dima.Core.Enums;
 using Dima.Core.Handlers;
 using Dima.Core.Models;
 using Dima.Core.Requests.Transactions;
+using Dima.Web.Components;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -57,14 +59,33 @@ public partial class ListTransactionsPage : ComponentBase
 
     public async void OnDeleteButtonClickedAsync(long id, string title)
     {
-        var result = await DialogService.ShowMessageBox(
-            "ATENÇÃO",
-            $"Ao prosseguir o lançamento {title} será excluído. Esta ação é irreversível! Deseja continuar?",
-            yesText: "EXCLUIR",
-            cancelText: "Cancelar");
+        var transaction = Transactions.FirstOrDefault(t => t.Id == id);
+        var isRecurring = transaction?.RecurrenceId.HasValue == true;
 
-        if (result is true)
-            await OnDeleteAsync(id, title);
+        if (isRecurring)
+        {
+            var parameters = new DialogParameters
+            {
+                ["Message"] = $"O lançamento \"{title}\" é recorrente. Excluir:"
+            };
+            var dialog = await DialogService.ShowAsync<RecurrenceScopeDialog>("Excluir lançamento recorrente", parameters);
+            var dialogResult = await dialog.Result;
+            if (dialogResult.Canceled)
+                return;
+
+            await OnDeleteAsync(id, title, (ERecurrenceScope)dialogResult.Data);
+        }
+        else
+        {
+            var result = await DialogService.ShowMessageBox(
+                "ATENÇÃO",
+                $"Ao prosseguir o lançamento {title} será excluído. Esta ação é irreversível! Deseja continuar?",
+                yesText: "EXCLUIR",
+                cancelText: "Cancelar");
+
+            if (result is true)
+                await OnDeleteAsync(id, title, ERecurrenceScope.OnlyThis);
+        }
 
         StateHasChanged();
     }
@@ -109,17 +130,19 @@ public partial class ListTransactionsPage : ComponentBase
         }
     }
 
-    private async Task OnDeleteAsync(long id, string title)
+    private async Task OnDeleteAsync(long id, string title, ERecurrenceScope scope)
     {
         IsBusy = true;
 
         try
         {
-            var result = await Handler.DeleteAsync(new DeleteTransactionRequest { Id = id });
+            var result = await Handler.DeleteAsync(new DeleteTransactionRequest { Id = id, Scope = scope });
             if (result.IsSuccess)
             {
-                Snackbar.Add($"Lançamento {title} removido!", Severity.Success);
-                Transactions.RemoveAll(x => x.Id == id);
+                Snackbar.Add(scope == ERecurrenceScope.OnlyThis
+                    ? $"Lançamento {title} removido!"
+                    : $"Lançamentos da recorrência \"{title}\" removidos!", Severity.Success);
+                await GetTransactionsAsync();
             }
             else
             {

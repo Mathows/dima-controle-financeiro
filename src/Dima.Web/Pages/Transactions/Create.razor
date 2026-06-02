@@ -48,6 +48,11 @@
             }
         </MudSelect>
 
+        <MudCheckBox @bind-Value="InputModel.IsRecurring"
+                     Label="Repetir mensalmente (cria 24 ocorrências futuras)"
+                     Color="Color.Primary"
+                     Class="mt-4"/>
+
         <div class="d-flex justify-end mt-6">
             <MudButton Href="/lancamentos/historico" Variant="Variant.Text" Class="mr-2">
                 Cancelar

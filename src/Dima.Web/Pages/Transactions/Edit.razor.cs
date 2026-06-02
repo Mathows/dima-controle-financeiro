@@ -1,7 +1,9 @@
+using Dima.Core.Enums;
 using Dima.Core.Handlers;
 using Dima.Core.Models;
 using Dima.Core.Requests.Categories;
 using Dima.Core.Requests.Transactions;
+using Dima.Web.Components;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -17,6 +19,7 @@ public partial class EditTransactionPage : ComponentBase
     public bool IsBusy { get; set; } = false;
     public UpdateTransactionRequest InputModel { get; set; } = new();
     public List<Category> Categories { get; set; } = [];
+    public bool IsRecurring { get; set; }
 
     #endregion
 
@@ -33,6 +36,9 @@ public partial class EditTransactionPage : ComponentBase
 
     [Inject]
     public ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject]
+    public IDialogService DialogService { get; set; } = null!;
 
     #endregion
 
@@ -54,6 +60,20 @@ public partial class EditTransactionPage : ComponentBase
 
     public async Task OnValidSubmitAsync()
     {
+        if (IsRecurring)
+        {
+            var parameters = new DialogParameters
+            {
+                ["Message"] = "Esse lançamento é recorrente. A alteração se aplica a:"
+            };
+            var dialog = await DialogService.ShowAsync<RecurrenceScopeDialog>("Editar lançamento recorrente", parameters);
+            var dialogResult = await dialog.Result;
+            if (dialogResult.Canceled)
+                return;
+
+            InputModel.Scope = (ERecurrenceScope)dialogResult.Data;
+        }
+
         IsBusy = true;
 
         try
@@ -101,6 +121,7 @@ public partial class EditTransactionPage : ComponentBase
                     Amount = result.Data.Amount,
                     Id = result.Data.Id,
                 };
+                IsRecurring = result.Data.RecurrenceId.HasValue;
             }
         }
         catch (Exception ex)

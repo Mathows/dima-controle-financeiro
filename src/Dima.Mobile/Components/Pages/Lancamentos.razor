@@ -1,8 +1,10 @@
 @page "/lancamentos"
 @using Dima.Core.Common.Extensions
+@using Dima.Core.Enums
 @using Dima.Core.Handlers
 @using Dima.Core.Models
 @using Dima.Core.Requests.Transactions
+@using Dima.Mobile.Components.Shared
 @using Dima.Mobile.Security
 @inject ITransactionHandler TransactionHandler
 @inject ITokenStorage TokenStorage
@@ -79,7 +81,13 @@ else
                     <MudIcon Icon="@(t.Type == ETransactionType.Deposit ? Icons.Material.Filled.ArrowUpward : Icons.Material.Filled.ArrowDownward)"
                              Color="@(t.Type == ETransactionType.Deposit ? Color.Success : Color.Error)"/>
                     <div style="flex-grow: 1; min-width: 0;">
-                        <MudText Typo="Typo.body2" Style="font-weight: 500;">@t.Title</MudText>
+                        <div class="d-flex align-center" style="gap: 4px;">
+                            <MudText Typo="Typo.body2" Style="font-weight: 500;">@t.Title</MudText>
+                            @if (t.RecurrenceId.HasValue)
+                            {
+                                <MudIcon Icon="@Icons.Material.Outlined.Repeat" Size="Size.Small" Style="opacity:.6;"/>
+                            }
+                        </div>
                         <MudText Typo="Typo.caption" Style="opacity:.7;">
                             @(t.PaidOrReceivedAt?.ToString("dd/MM/yyyy") ?? "-")
                         </MudText>
@@ -161,31 +169,57 @@ else
 
     private async Task OnDeleteAsync(Transaction t)
     {
-        var result = await DialogService.ShowMessageBox(
-            "Excluir lançamento?",
-            $"\"{t.Title}\" será excluído. Esta ação é irreversível.",
-            yesText: "Excluir",
-            cancelText: "Cancelar");
+        var scope = ERecurrenceScope.OnlyThis;
+        bool? confirmed;
 
-        if (result is true)
+        if (t.RecurrenceId.HasValue)
         {
-            try
+            var parameters = new DialogParameters
             {
-                var del = await TransactionHandler.DeleteAsync(new DeleteTransactionRequest { Id = t.Id });
-                if (del.IsSuccess)
-                {
-                    Snackbar.Add("Lançamento excluído", Severity.Success);
-                    Transactions.RemoveAll(x => x.Id == t.Id);
-                }
-                else
-                {
-                    Snackbar.Add(del.Message ?? "Falha ao excluir", Severity.Error);
-                }
-            }
-            catch (Exception ex)
+                ["Message"] = $"\"{t.Title}\" é recorrente. Excluir:"
+            };
+            var dialogRef = await DialogService.ShowAsync<RecurrenceScopeDialog>("Excluir recorrente", parameters);
+            var dialogResult = await dialogRef.Result;
+            if (dialogResult is null || dialogResult.Canceled)
+                return;
+
+            scope = (ERecurrenceScope)dialogResult.Data!;
+            confirmed = true;
+        }
+        else
+        {
+            confirmed = await DialogService.ShowMessageBox(
+                "Excluir lançamento?",
+                $"\"{t.Title}\" será excluído. Esta ação é irreversível.",
+                yesText: "Excluir",
+                cancelText: "Cancelar");
+        }
+
+        if (confirmed != true)
+            return;
+
+        try
+        {
+            var del = await TransactionHandler.DeleteAsync(new DeleteTransactionRequest
             {
-                Snackbar.Add(ex.Message, Severity.Error);
+                Id = t.Id,
+                Scope = scope
+            });
+            if (del.IsSuccess)
+            {
+                Snackbar.Add(scope == ERecurrenceScope.OnlyThis
+                    ? "Lançamento excluído"
+                    : "Lançamentos da recorrência excluídos", Severity.Success);
+                await LoadAsync();
             }
+            else
+            {
+                Snackbar.Add(del.Message ?? "Falha ao excluir", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 }

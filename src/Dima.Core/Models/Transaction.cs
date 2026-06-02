@@ -18,4 +18,6 @@ public class Transaction
     public Category Category { get; set; } = null!;
 
     public string UserId { get; set; } = string.Empty;
+
+    public Guid? RecurrenceId { get; set; }
 }
