@@ -8,6 +8,14 @@
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
+@if (!_isAuthenticated)
+{
+    <div class="d-flex justify-center pa-8">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+    </div>
+    return;
+}
+
 <MudText Typo="Typo.h5" Class="mb-1">Dashboard</MudText>
 <MudText Typo="Typo.body2" Class="mb-4" Style="opacity:.7;">@GetMonthLabel()</MudText>
 
@@ -109,6 +117,7 @@
 
     public bool IsLoading { get; set; }
     public FinancialSummary? Summary { get; set; }
+    private bool _isAuthenticated;
 
     protected override async Task OnInitializedAsync()
     {
@@ -119,6 +128,7 @@
             return;
         }
 
+        _isAuthenticated = true;
         await LoadAsync();
     }
 
