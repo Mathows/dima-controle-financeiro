@@ -1,0 +1,221 @@
+@page "/conta"
+@using Dima.Core.Handlers
+@using Dima.Core.Requests.Account
+@using Dima.Mobile.Security
+@inject IAccountHandler Handler
+@inject ITokenStorage TokenStorage
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h5" Class="mb-3">Minha conta</MudText>
+
+@if (IsLoading)
+{
+    <div class="d-flex justify-center pa-8">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+    </div>
+}
+else
+{
+    <MudTabs Rounded="true" Color="Color.Primary" PanelClass="pt-4">
+        <MudTabPanel Text="Perfil" Icon="@Icons.Material.Outlined.Person">
+            <MudTextField T="string"
+                          Label="Nome"
+                          Variant="Variant.Outlined"
+                          Immediate="true"
+                          DebounceInterval="0"
+                          Value="@ProfileModel.FirstName"
+                          ValueChanged="@((string v) => ProfileModel.FirstName = v ?? string.Empty)"/>
+
+            <MudTextField T="string"
+                          Label="Sobrenome"
+                          Variant="Variant.Outlined"
+                          Immediate="true"
+                          DebounceInterval="0"
+                          Value="@ProfileModel.LastName"
+                          ValueChanged="@((string v) => ProfileModel.LastName = v ?? string.Empty)"
+                          Class="mt-3"/>
+
+            <MudTextField T="string"
+                          Label="E-mail"
+                          Variant="Variant.Outlined"
+                          Value="@CurrentEmail"
+                          Disabled="true"
+                          ReadOnly="true"
+                          HelperText="O e-mail não pode ser alterado"
+                          Class="mt-3"/>
+
+            <div class="d-flex justify-end mt-4">
+                @if (IsSavingProfile)
+                {
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+                }
+                else
+                {
+                    <MudButton OnClick="OnUpdateProfileAsync"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Save">
+                        SALVAR
+                    </MudButton>
+                }
+            </div>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Senha" Icon="@Icons.Material.Outlined.Lock">
+            <MudTextField T="string"
+                          Label="Senha atual"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Password"
+                          Immediate="true"
+                          DebounceInterval="0"
+                          Value="@PasswordModel.CurrentPassword"
+                          ValueChanged="@((string v) => PasswordModel.CurrentPassword = v ?? string.Empty)"/>
+
+            <MudTextField T="string"
+                          Label="Nova senha"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Password"
+                          Immediate="true"
+                          DebounceInterval="0"
+                          Value="@PasswordModel.NewPassword"
+                          ValueChanged="@((string v) => PasswordModel.NewPassword = v ?? string.Empty)"
+                          HelperText="Mínimo 6 caracteres"
+                          Class="mt-3"/>
+
+            @if (!string.IsNullOrEmpty(PasswordError))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-3" Dense="true">@PasswordError</MudAlert>
+            }
+
+            <div class="d-flex justify-end mt-4">
+                @if (IsChangingPassword)
+                {
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+                }
+                else
+                {
+                    <MudButton OnClick="OnChangePasswordAsync"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Key">
+                        ALTERAR
+                    </MudButton>
+                }
+            </div>
+        </MudTabPanel>
+    </MudTabs>
+}
+
+@code {
+    public bool IsLoading { get; set; } = true;
+    public bool IsSavingProfile { get; set; }
+    public bool IsChangingPassword { get; set; }
+
+    public string CurrentEmail { get; set; } = string.Empty;
+    public UpdateProfileRequest ProfileModel { get; set; } = new();
+    public ChangePasswordRequest PasswordModel { get; set; } = new();
+    public string? PasswordError { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await TokenStorage.GetAccessTokenAsync();
+        if (string.IsNullOrEmpty(token))
+        {
+            Navigation.NavigateTo("/login", forceLoad: true);
+            return;
+        }
+
+        try
+        {
+            var result = await Handler.GetProfileAsync();
+            if (result.IsSuccess && result.Data is not null)
+            {
+                ProfileModel.FirstName = result.Data.FirstName;
+                ProfileModel.LastName = result.Data.LastName;
+                CurrentEmail = result.Data.Email;
+            }
+            else
+            {
+                Snackbar.Add(result.Message ?? "Não foi possível carregar o perfil", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task OnUpdateProfileAsync()
+    {
+        IsSavingProfile = true;
+        StateHasChanged();
+        try
+        {
+            var result = await Handler.UpdateProfileAsync(ProfileModel);
+            if (result.IsSuccess && result.Data is not null)
+            {
+                ProfileModel.FirstName = result.Data.FirstName;
+                ProfileModel.LastName = result.Data.LastName;
+                Snackbar.Add("Perfil atualizado! Saia e entre novamente para ver as mudanças.", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add(result.Message ?? "Não foi possível atualizar o perfil", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            IsSavingProfile = false;
+        }
+    }
+
+    private async Task OnChangePasswordAsync()
+    {
+        PasswordError = null;
+
+        if (string.IsNullOrWhiteSpace(PasswordModel.CurrentPassword) ||
+            string.IsNullOrWhiteSpace(PasswordModel.NewPassword))
+        {
+            PasswordError = "Preencha senha atual e nova senha";
+            return;
+        }
+        if (PasswordModel.NewPassword.Length < 6)
+        {
+            PasswordError = "Nova senha deve ter no mínimo 6 caracteres";
+            return;
+        }
+
+        IsChangingPassword = true;
+        StateHasChanged();
+        try
+        {
+            var result = await Handler.ChangePasswordAsync(PasswordModel);
+            if (result.IsSuccess)
+            {
+                PasswordModel = new ChangePasswordRequest();
+                Snackbar.Add("Senha alterada com sucesso!", Severity.Success);
+            }
+            else
+            {
+                PasswordError = result.Message ?? "Não foi possível alterar a senha";
+            }
+        }
+        catch (Exception ex)
+        {
+            PasswordError = ex.Message;
+        }
+        finally
+        {
+            IsChangingPassword = false;
+        }
+    }
+}

@@ -1,0 +1,191 @@
+@page "/lancamentos"
+@using Dima.Core.Common.Extensions
+@using Dima.Core.Handlers
+@using Dima.Core.Models
+@using Dima.Core.Requests.Transactions
+@using Dima.Mobile.Security
+@inject ITransactionHandler TransactionHandler
+@inject ITokenStorage TokenStorage
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<div class="d-flex justify-space-between align-center mb-3">
+    <MudText Typo="Typo.h5">Lançamentos</MudText>
+    <MudIconButton Icon="@Icons.Material.Filled.Add"
+                   Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   Href="/lancamentos/novo"
+                   aria-label="Novo lançamento"/>
+</div>
+
+<MudGrid Spacing="2" Class="mb-4">
+    <MudItem xs="6">
+        <MudSelect T="int"
+                   Label="Mês"
+                   Dense="true"
+                   Variant="Variant.Outlined"
+                   Value="@SelectedMonth"
+                   ValueChanged="@(async (int v) => { SelectedMonth = v; await LoadAsync(); })">
+            @for (var m = 1; m <= 12; m++)
+            {
+                var date = new DateTime(2026, m, 1);
+                <MudSelectItem Value="@m">@(date.ToString("MMMM"))</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="6">
+        <MudSelect T="int"
+                   Label="Ano"
+                   Dense="true"
+                   Variant="Variant.Outlined"
+                   Value="@SelectedYear"
+                   ValueChanged="@(async (int v) => { SelectedYear = v; await LoadAsync(); })">
+            @foreach (var y in Years)
+            {
+                <MudSelectItem Value="@y">@y</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+</MudGrid>
+
+@if (IsLoading)
+{
+    <div class="d-flex justify-center pa-8">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+    </div>
+}
+else if (Transactions.Count == 0)
+{
+    <MudPaper Class="pa-6 d-flex flex-column align-center" Elevation="0" Style="background: rgba(255,255,255,0.03);">
+        <MudIcon Icon="@Icons.Material.Outlined.ReceiptLong" Size="Size.Large" Style="opacity:.6;"/>
+        <MudText Typo="Typo.body2" Class="mt-2" Style="opacity:.7;">Sem lançamentos neste período.</MudText>
+        <MudButton Href="/lancamentos/novo"
+                   Variant="Variant.Text"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Class="mt-2">
+            Novo lançamento
+        </MudButton>
+    </MudPaper>
+}
+else
+{
+    <MudList T="Transaction" Dense="true" Class="pa-0">
+        @foreach (var t in Transactions.OrderBy(x => x.PaidOrReceivedAt))
+        {
+            <MudListItem T="Transaction" Class="px-2">
+                <div class="d-flex align-center" style="width: 100%; gap: 8px;">
+                    <MudIcon Icon="@(t.Type == ETransactionType.Deposit ? Icons.Material.Filled.ArrowUpward : Icons.Material.Filled.ArrowDownward)"
+                             Color="@(t.Type == ETransactionType.Deposit ? Color.Success : Color.Error)"/>
+                    <div style="flex-grow: 1; min-width: 0;">
+                        <MudText Typo="Typo.body2" Style="font-weight: 500;">@t.Title</MudText>
+                        <MudText Typo="Typo.caption" Style="opacity:.7;">
+                            @(t.PaidOrReceivedAt?.ToString("dd/MM/yyyy") ?? "-")
+                        </MudText>
+                    </div>
+                    <MudText Typo="Typo.body2"
+                             Color="@(t.Type == ETransactionType.Deposit ? Color.Success : Color.Error)"
+                             Style="font-weight: 600;">
+                        @t.Amount.ToString("C")
+                    </MudText>
+                    <MudIconButton Icon="@Icons.Material.Outlined.Edit"
+                                   Size="Size.Small"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => Navigation.NavigateTo($"/lancamentos/editar/{t.Id}"))"
+                                   aria-label="Editar"/>
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete"
+                                   Size="Size.Small"
+                                   Color="Color.Error"
+                                   OnClick="@(() => OnDeleteAsync(t))"
+                                   aria-label="Excluir"/>
+                </div>
+            </MudListItem>
+            <MudDivider/>
+        }
+    </MudList>
+}
+
+@code {
+    public int SelectedMonth { get; set; } = DateTime.Now.Month;
+    public int SelectedYear { get; set; } = DateTime.Now.Year;
+    public int[] Years { get; } =
+    [
+        DateTime.Now.AddYears(1).Year,
+        DateTime.Now.Year,
+        DateTime.Now.AddYears(-1).Year,
+        DateTime.Now.AddYears(-2).Year
+    ];
+
+    public bool IsLoading { get; set; }
+    public List<Transaction> Transactions { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await TokenStorage.GetAccessTokenAsync();
+        if (string.IsNullOrEmpty(token))
+        {
+            Navigation.NavigateTo("/login", forceLoad: true);
+            return;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            var reference = new DateTime(SelectedYear, SelectedMonth, 1);
+            var request = new GetTransactionsByPeriodRequest
+            {
+                StartDate = reference.GetFirstDay(),
+                EndDate = reference.GetLastDay(),
+                PageNumber = 1,
+                PageSize = 1000
+            };
+            var result = await TransactionHandler.GetByPeriodAsync(request);
+            Transactions = result.IsSuccess ? result.Data ?? [] : [];
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+            Transactions = [];
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task OnDeleteAsync(Transaction t)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Excluir lançamento?",
+            $"\"{t.Title}\" será excluído. Esta ação é irreversível.",
+            yesText: "Excluir",
+            cancelText: "Cancelar");
+
+        if (result is true)
+        {
+            try
+            {
+                var del = await TransactionHandler.DeleteAsync(new DeleteTransactionRequest { Id = t.Id });
+                if (del.IsSuccess)
+                {
+                    Snackbar.Add("Lançamento excluído", Severity.Success);
+                    Transactions.RemoveAll(x => x.Id == t.Id);
+                }
+                else
+                {
+                    Snackbar.Add(del.Message ?? "Falha ao excluir", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+        }
+    }
+}

@@ -1,0 +1,154 @@
+@page "/"
+@using Dima.Core.Handlers
+@using Dima.Core.Models.Reports
+@using Dima.Core.Requests.Reports
+@using Dima.Mobile.Security
+@inject IReportHandler ReportHandler
+@inject ITokenStorage TokenStorage
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h5" Class="mb-1">Dashboard</MudText>
+<MudText Typo="Typo.body2" Class="mb-4" Style="opacity:.7;">@GetMonthLabel()</MudText>
+
+<MudGrid Spacing="2" Class="mb-4">
+    <MudItem xs="6">
+        <MudSelect T="int"
+                   Label="Mês"
+                   Dense="true"
+                   Variant="Variant.Outlined"
+                   @bind-Value="SelectedMonth"
+                   @bind-Value:after="LoadAsync">
+            @for (var m = 1; m <= 12; m++)
+            {
+                var date = new DateTime(2026, m, 1);
+                <MudSelectItem Value="@m">@(date.ToString("MMMM"))</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="6">
+        <MudSelect T="int"
+                   Label="Ano"
+                   Dense="true"
+                   Variant="Variant.Outlined"
+                   @bind-Value="SelectedYear"
+                   @bind-Value:after="LoadAsync">
+            @foreach (var y in Years)
+            {
+                <MudSelectItem Value="@y">@y</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+</MudGrid>
+
+<MudCard Class="pa-4 mb-3">
+    <MudText Typo="Typo.subtitle1" Style="font-weight: 500;">Resumo do mês</MudText>
+    @if (IsLoading || Summary is null)
+    {
+        <div class="d-flex justify-center pa-4">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+        </div>
+    }
+    else
+    {
+        <div class="mt-3">
+            <MudText Typo="Typo.caption" Style="font-weight: 600;">SALDO</MudText>
+            <MudText Typo="Typo.h4" Color="@(Summary.Total >= 0 ? Color.Success : Color.Error)">
+                @Summary.Total.ToString("C")
+            </MudText>
+        </div>
+
+        <MudGrid Class="mt-3">
+            <MudItem xs="6">
+                <MudText Typo="Typo.caption" Style="font-weight: 600;">Entradas</MudText>
+                <MudText Color="Color.Success" Typo="Typo.h6">@Summary.Incomes.ToString("C")</MudText>
+            </MudItem>
+            <MudItem xs="6">
+                <MudText Typo="Typo.caption" Style="font-weight: 600;">Saídas</MudText>
+                <MudText Color="Color.Error" Typo="Typo.h6">@Summary.Expenses.ToString("C")</MudText>
+            </MudItem>
+        </MudGrid>
+    }
+</MudCard>
+
+<div class="d-flex justify-end mb-2">
+    <MudButton Href="/lancamentos"
+               Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.List"
+               Size="Size.Small">
+        Ver lançamentos
+    </MudButton>
+</div>
+
+<MudCard Class="pa-3 mb-3 mt-4">
+    <MudText Typo="Typo.subtitle1" Class="mb-2" Style="font-weight: 500;">Receitas e Despesas (12 meses)</MudText>
+    <IncomesAndExpensesChart Year="SelectedYear" Month="SelectedMonth"/>
+</MudCard>
+
+<MudCard Class="pa-3 mb-3">
+    <MudText Typo="Typo.subtitle1" Class="mb-2" Style="font-weight: 500;">Entradas por Categoria</MudText>
+    <IncomesByCategoryChart Year="SelectedYear" Month="SelectedMonth"/>
+</MudCard>
+
+<MudCard Class="pa-3 mb-3">
+    <MudText Typo="Typo.subtitle1" Class="mb-2" Style="font-weight: 500;">Despesas por Categoria</MudText>
+    <ExpensesByCategoryChart Year="SelectedYear" Month="SelectedMonth"/>
+</MudCard>
+
+@code {
+    public int SelectedMonth { get; set; } = DateTime.Now.Month;
+    public int SelectedYear { get; set; } = DateTime.Now.Year;
+    public int[] Years { get; } =
+    [
+        DateTime.Now.AddYears(1).Year,
+        DateTime.Now.Year,
+        DateTime.Now.AddYears(-1).Year,
+        DateTime.Now.AddYears(-2).Year
+    ];
+
+    public bool IsLoading { get; set; }
+    public FinancialSummary? Summary { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await TokenStorage.GetAccessTokenAsync();
+        if (string.IsNullOrEmpty(token))
+        {
+            Navigation.NavigateTo("/login", forceLoad: true);
+            return;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        Summary = null;
+        try
+        {
+            var request = new GetFinancialSummaryRequest
+            {
+                Year = SelectedYear,
+                Month = SelectedMonth
+            };
+            var result = await ReportHandler.GetFinancialSummaryReportAsync(request);
+            Summary = result.IsSuccess
+                ? result.Data ?? new FinancialSummary(string.Empty, 0, 0)
+                : new FinancialSummary(string.Empty, 0, 0);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+            Summary = new FinancialSummary(string.Empty, 0, 0);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private string GetMonthLabel()
+        => new DateTime(SelectedYear, SelectedMonth, 1).ToString("MMMM 'de' yyyy");
+}

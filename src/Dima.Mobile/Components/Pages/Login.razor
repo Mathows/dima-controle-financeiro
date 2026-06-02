@@ -1,0 +1,123 @@
+@page "/login"
+@layout EmptyLayout
+@using Dima.Core.Handlers
+@using Dima.Core.Requests.Account
+@inject IAccountHandler Handler
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<div class="d-flex flex-column align-center justify-center" style="min-height: 100vh; padding: 24px;">
+    <MudPaper Class="pa-6 mud-width-full" MaxWidth="400px" Elevation="4">
+        <div class="d-flex flex-column align-center pb-4">
+            <MudAvatar Color="Color.Primary" Size="Size.Large" Class="mb-2">D</MudAvatar>
+            <MudText Typo="Typo.h5">Dima</MudText>
+            <MudText Typo="Typo.caption" Style="opacity: .7;">Seu controle financeiro no bolso</MudText>
+        </div>
+
+        <MudTextField T="string"
+                      Label="E-mail"
+                      Variant="Variant.Outlined"
+                      InputType="InputType.Email"
+                      Immediate="true"
+                      DebounceInterval="0"
+                      Value="@Email"
+                      ValueChanged="@((string v) => Email = v ?? string.Empty)"/>
+
+        <MudTextField T="string"
+                      Label="Senha"
+                      Variant="Variant.Outlined"
+                      InputType="InputType.Password"
+                      Immediate="true"
+                      DebounceInterval="0"
+                      Value="@Password"
+                      ValueChanged="@((string v) => Password = v ?? string.Empty)"
+                      Class="mt-3"/>
+
+        <div class="d-flex justify-end mt-2">
+            <MudLink Href="/esqueci-senha" Typo="Typo.body2">Esqueci minha senha</MudLink>
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3" Dense="true">
+                @ErrorMessage
+            </MudAlert>
+        }
+
+        <div class="mt-6">
+            @if (IsBusy)
+            {
+                <div class="d-flex flex-column align-center">
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+                    <MudText Typo="Typo.caption" Class="mt-2" Style="opacity:.7;">
+                        Conectando à API (pode demorar ~30s na primeira vez)...
+                    </MudText>
+                </div>
+            }
+            else
+            {
+                <MudButton OnClick="OnSubmitAsync"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           Size="Size.Large"
+                           Disabled="@(string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))">
+                    ENTRAR
+                </MudButton>
+            }
+        </div>
+
+        <MudText Typo="Typo.caption" Class="mt-4 d-block text-center" Style="opacity: .6;">
+            Use a mesma conta da versão web.
+        </MudText>
+    </MudPaper>
+</div>
+
+@code {
+    public bool IsBusy { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string? ErrorMessage { get; set; }
+
+    private async Task OnSubmitAsync()
+    {
+        ErrorMessage = null;
+
+        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
+        {
+            ErrorMessage = "Preencha e-mail e senha";
+            return;
+        }
+
+        IsBusy = true;
+        StateHasChanged();
+
+        try
+        {
+            var request = new LoginRequest { Email = Email, Password = Password };
+            var result = await Handler.LoginAsync(request);
+
+            if (result.IsSuccess)
+            {
+                Snackbar.Add("Bem-vindo!", Severity.Success);
+                Navigation.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                ErrorMessage = result.Message ?? "Erro ao fazer login";
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            ErrorMessage = $"Falha de conexão: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Erro inesperado: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+}
