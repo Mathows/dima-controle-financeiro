@@ -67,6 +67,10 @@ h1:focus {
         content: "An error has occurred."
     }
 
+.dima-chart-no-legend .mud-chart-legend {
+    display: none !important;
+}
+
 .status-bar-safe-area {
     display: none;
 }
