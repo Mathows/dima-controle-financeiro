@@ -4,7 +4,7 @@ Aplicação fullstack de controle financeiro pessoal. Permite ao usuário cadast
 
 - 🌐 **Web** (Blazor WebAssembly) — em produção no Azure Static Web Apps
 - 🔌 **API REST** (.NET 8) — em produção no Azure App Service
-- 📱 **Mobile** (.NET MAUI Blazor Hybrid) — projeto incluído como exercício arquitetural, reaproveita 100% do `Dima.Core`
+- 📱 **Mobile** (.NET MAUI Blazor Hybrid) — APK Android disponível na aba Releases, reaproveita 100% do `Dima.Core`
 
 > Projeto baseado no curso **Full Stack .NET** ministrado por [André Baltieri](https://github.com/andrebaltieri) ([balta.io](https://balta.io)).
 
@@ -14,6 +14,7 @@ Aplicação fullstack de controle financeiro pessoal. Permite ao usuário cadast
 
 - **Web em produção**: https://black-sand-042c6dc03.7.azurestaticapps.net
 - **API em produção**: https://dima-api-matheus.azurewebsites.net
+- **APK Android**: [Download v1.1.1](https://github.com/Mathows/dima-controle-financeiro/releases/latest) (31 MB)
 
 ---
 
@@ -60,6 +61,7 @@ Aplicação fullstack de controle financeiro pessoal. Permite ao usuário cadast
 - 👤 Página de Conta: editar nome/sobrenome, trocar senha
 - 🏷️ CRUD de categorias com **tipo** (Entrada/Saída) — escolhe a categoria e o tipo do lançamento vem junto
 - 💸 CRUD de transações com filtro por mês/ano
+- 🔁 **Lançamentos recorrentes** mensais (cria 24 ocorrências futuras de uma vez; ao editar/excluir oferece 3 escopos: apenas esta, esta e futuras, ou todas)
 - 📊 Dashboard com:
   - Resumo financeiro do mês selecionado (saldo, entradas, saídas)
   - Lista de lançamentos do período
@@ -166,17 +168,21 @@ dotnet run -f net9.0-android
 
 ## 📱 Versão mobile (.NET MAUI Blazor Hybrid)
 
-O `Dima.Mobile` é um app **.NET MAUI Blazor Hybrid** que consome a mesma API publicada no Azure. Foi construído como **exercício arquitetural** para validar o reaproveitamento do `Dima.Core` entre Web (Blazor WASM) e Mobile (MAUI). Possui:
+O `Dima.Mobile` é um app **.NET MAUI Blazor Hybrid** que consome a mesma API publicada no Azure. Reaproveita 100% do `Dima.Core` (DTOs, interfaces, enums) entre Web e Mobile. Possui:
 
 - Login + Esqueci senha
 - Dashboard com seletor de período + 3 gráficos
-- CRUD completo de Lançamentos e Categorias
+- CRUD completo de Lançamentos e Categorias (com suporte a recorrência mensal)
 - Página de Conta (editar perfil + trocar senha)
 - Tema escuro, layout mobile-first
 
 Tokens JWT são guardados em **SecureStorage** (criptografados pelo Android Keystore / iOS Keychain / Windows DPAPI).
 
-> **Nota**: O foco do projeto é a versão web em produção. O Mobile está incluído como demonstração de arquitetura compartilhada (Core reaproveitado entre frontends). Para experimentar, é necessário compilar localmente — basta seguir as instruções acima.
+### 📥 Instalar no Android
+1. Baixe o **Dima-v1.1.1.apk** na aba [Releases](https://github.com/Mathows/dima-controle-financeiro/releases/latest)
+2. No celular: Configurações → Segurança → permitir "Instalar apps de fontes desconhecidas"
+3. Abra o APK pelo gerenciador de arquivos e instale
+4. Use a **mesma conta** da versão web
 
 ---
 
@@ -207,7 +213,8 @@ Custo total: **R$ 0/mês**.
 | **Dashboard** | Mês corrente fixo | Seletor de mês/ano em todos os componentes |
 | **Lista de lançamentos** | Não havia no dashboard | Card novo mostrando transações do período |
 | **Gráfico mensal** | Line chart | Bar chart com labels formatados (1K, 2K) |
-| **Plataformas** | Web only | + Projeto Mobile (.NET MAUI Blazor Hybrid) reaproveitando `Dima.Core` |
+| **Lançamentos recorrentes** | Apenas pontuais | Recorrência mensal automática com 24 ocorrências; edit/delete com escopo (apenas esta / esta e futuras / todas) |
+| **Plataformas** | Web only | + App Android (.NET MAUI Blazor Hybrid) com APK funcional reaproveitando `Dima.Core` |
 | **Documentação** | Intro do curso | README completo: arquitetura, deploy, instruções mobile |
 
 ---
