@@ -21,4 +21,6 @@ public class UpdateTransactionRequest : Request
 
     [Required(ErrorMessage = "Data inválida")]
     public DateTime? PaidOrReceivedAt { get; set; }
+
+    public ERecurrenceScope Scope { get; set; } = ERecurrenceScope.OnlyThis;
 }

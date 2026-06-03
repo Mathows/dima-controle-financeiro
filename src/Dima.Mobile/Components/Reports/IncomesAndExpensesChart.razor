@@ -1,6 +1,6 @@
 @inherits IncomesAndExpensesChartComponent
 
-<div style="height: 320px; width: 100%; padding-left: 24px;">
+<div class="dima-chart-no-legend" style="height: 320px; width: 100%; padding-left: 24px;">
     @if (Series is null)
     {
         <div class="d-flex align-center justify-center" style="height: 100%;">
@@ -13,7 +13,6 @@
                   ChartType="ChartType.Bar"
                   ChartSeries="Series"
                   XAxisLabels="Labels.ToArray()"
-                  CanHideSeries="true"
                   Width="100%"
                   Height="100%"/>
     }

@@ -1,0 +1,32 @@
+@using Dima.Core.Enums
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body1" Class="mb-3">
+            @Message
+        </MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancelar</MudButton>
+        <MudButton OnClick="@(() => Select(ERecurrenceScope.OnlyThis))" Variant="Variant.Outlined">
+            Apenas esta
+        </MudButton>
+        <MudButton OnClick="@(() => Select(ERecurrenceScope.ThisAndFuture))"
+                   Variant="Variant.Outlined" Color="Color.Primary">
+            Esta e futuras
+        </MudButton>
+        <MudButton OnClick="@(() => Select(ERecurrenceScope.All))"
+                   Variant="Variant.Filled" Color="Color.Secondary">
+            Todas as ocorrências
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public string Message { get; set; } = "Esse lançamento é recorrente. O que deseja fazer?";
+
+    private void Select(ERecurrenceScope scope) => MudDialog.Close(DialogResult.Ok(scope));
+    private void Cancel() => MudDialog.Cancel();
+}

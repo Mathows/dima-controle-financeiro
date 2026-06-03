@@ -1,15 +1,18 @@
 @page "/lancamentos/novo"
 @page "/lancamentos/editar/{Id}"
+@using Dima.Core.Enums
 @using Dima.Core.Handlers
 @using Dima.Core.Models
 @using Dima.Core.Requests.Categories
 @using Dima.Core.Requests.Transactions
+@using Dima.Mobile.Components.Shared
 @using Dima.Mobile.Security
 @inject ITransactionHandler TransactionHandler
 @inject ICategoryHandler CategoryHandler
 @inject ITokenStorage TokenStorage
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <MudText Typo="Typo.h5" Class="mb-4">@(IsEdit ? "Editar Lançamento" : "Novo Lançamento")</MudText>
 
@@ -68,6 +71,21 @@ else
         }
     </MudSelect>
 
+    @if (!IsEdit)
+    {
+        <MudCheckBox @bind-Value="IsRecurringNew"
+                     Label="Repetir mensalmente (cria 24 ocorrências)"
+                     Color="Color.Primary"
+                     Class="mt-4"/>
+    }
+    else if (IsExistingRecurring)
+    {
+        <div class="d-flex align-center mt-4" style="gap: 8px; opacity: .8;">
+            <MudIcon Icon="@Icons.Material.Outlined.Repeat" Color="Color.Primary" Size="Size.Small"/>
+            <MudText Typo="Typo.body2">Esse lançamento faz parte de uma recorrência.</MudText>
+        </div>
+    }
+
     @if (!string.IsNullOrEmpty(ErrorMessage))
     {
         <MudAlert Severity="Severity.Error" Class="mt-3" Dense="true">@ErrorMessage</MudAlert>
@@ -106,6 +124,8 @@ else
     public long CategoryId { get; set; }
     public List<Category> Categories { get; set; } = [];
     public string? ErrorMessage { get; set; }
+    public bool IsRecurringNew { get; set; }
+    public bool IsExistingRecurring { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -131,6 +151,7 @@ else
                     Amount = Math.Abs(t.Amount);
                     PaidOrReceivedAt = t.PaidOrReceivedAt;
                     CategoryId = t.CategoryId;
+                    IsExistingRecurring = t.RecurrenceId.HasValue;
                 }
             }
         }
@@ -164,6 +185,21 @@ else
             return;
         }
 
+        var updateScope = ERecurrenceScope.OnlyThis;
+        if (IsEdit && IsExistingRecurring)
+        {
+            var parameters = new DialogParameters
+            {
+                ["Message"] = "Esse lançamento é recorrente. A alteração se aplica a:"
+            };
+            var dialogRef = await DialogService.ShowAsync<RecurrenceScopeDialog>("Editar recorrente", parameters);
+            var dialogResult = await dialogRef.Result;
+            if (dialogResult is null || dialogResult.Canceled)
+                return;
+
+            updateScope = (ERecurrenceScope)dialogResult.Data!;
+        }
+
         IsSaving = true;
         StateHasChanged();
 
@@ -177,7 +213,8 @@ else
                     Title = Title,
                     Amount = Amount,
                     CategoryId = CategoryId,
-                    PaidOrReceivedAt = PaidOrReceivedAt
+                    PaidOrReceivedAt = PaidOrReceivedAt,
+                    Scope = updateScope
                 };
                 var result = await TransactionHandler.UpdateAsync(request);
                 if (result.IsSuccess)
@@ -197,12 +234,15 @@ else
                     Title = Title,
                     Amount = Amount,
                     CategoryId = CategoryId,
-                    PaidOrReceivedAt = PaidOrReceivedAt
+                    PaidOrReceivedAt = PaidOrReceivedAt,
+                    IsRecurring = IsRecurringNew
                 };
                 var result = await TransactionHandler.CreateAsync(request);
                 if (result.IsSuccess)
                 {
-                    Snackbar.Add("Lançamento criado!", Severity.Success);
+                    Snackbar.Add(IsRecurringNew
+                        ? "Lançamento recorrente criado (24 ocorrências)!"
+                        : "Lançamento criado!", Severity.Success);
                     Navigation.NavigateTo("/lancamentos");
                 }
                 else

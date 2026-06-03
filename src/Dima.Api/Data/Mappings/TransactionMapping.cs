@@ -30,5 +30,9 @@ public class TransactionMapping : IEntityTypeConfiguration<Transaction>
             .IsRequired(true)
             .HasColumnType("VARCHAR")
             .HasMaxLength(160);
+        builder.Property(x => x.RecurrenceId)
+            .IsRequired(false);
+        builder.HasIndex(x => x.RecurrenceId)
+            .HasFilter("[RecurrenceId] IS NOT NULL");
     }
 }

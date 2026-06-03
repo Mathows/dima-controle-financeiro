@@ -19,4 +19,6 @@ public class CreateTransactionRequest : Request
 
     [Required(ErrorMessage = "Data inválida")]
     public DateTime? PaidOrReceivedAt { get; set; }
+
+    public bool IsRecurring { get; set; }
 }
