@@ -1,7 +1,18 @@
+@using Dima.Mobile.Security
+@inject IUserContext UserContext
+@implements IDisposable
+
 <div class="d-flex flex-column align-center pa-6" style="background: rgba(30, 250, 45, 0.08);">
-    <MudAvatar Color="Color.Primary" Size="Size.Large">D</MudAvatar>
-    <MudText Typo="Typo.h6" Class="mt-2">Dima</MudText>
-    <MudText Typo="Typo.caption" Style="opacity: .7;">Controle Financeiro</MudText>
+    <MudAvatar Color="Color.Primary" Size="Size.Large">@_initials</MudAvatar>
+    <MudText Typo="Typo.h6" Class="mt-2">@_displayName</MudText>
+    @if (!string.IsNullOrWhiteSpace(_email) && !string.Equals(_email, _displayName, StringComparison.OrdinalIgnoreCase))
+    {
+        <MudText Typo="Typo.caption" Style="opacity: .7;">@_email</MudText>
+    }
+    else
+    {
+        <MudText Typo="Typo.caption" Style="opacity: .7;">Controle Financeiro</MudText>
+    }
 </div>
 
 <MudNavMenu>
@@ -11,3 +22,19 @@
     <MudNavLink Href="/conta" Icon="@Icons.Material.Outlined.ManageAccounts">Conta</MudNavLink>
     <MudNavLink Href="/sair" Icon="@Icons.Material.Outlined.Logout">Sair</MudNavLink>
 </MudNavMenu>
+
+@code {
+    private string _displayName = "Dima";
+    private string _initials = "D";
+    private string? _email;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var info = await UserContext.GetAsync();
+        _displayName = info.DisplayName;
+        _initials = info.Initials;
+        _email = info.Email;
+    }
+
+    public void Dispose() { }
+}

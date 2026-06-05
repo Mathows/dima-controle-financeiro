@@ -29,6 +29,7 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<ITokenStorage, SecureTokenStorage>();
         builder.Services.AddTransient<BearerTokenHandler>();
+        builder.Services.AddTransient<IUserContext, UserContext>();
 
         builder.Services
             .AddHttpClient(Configuration.HttpClientName, opt =>
