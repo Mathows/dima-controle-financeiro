@@ -12,17 +12,7 @@
                     @GetInitials(context.User)
                 </MudAvatar>
                 <div class="ml-3" style="overflow: hidden;">
-                    @{
-                        var displayName = GetDisplayName(context.User);
-                        var email = context.User.Identity?.Name ?? string.Empty;
-                        var showEmail = !string.IsNullOrWhiteSpace(email)
-                            && !string.Equals(email, displayName, StringComparison.OrdinalIgnoreCase);
-                    }
-                    <MudText Typo="Typo.body1" Style="font-weight: 500;">@displayName</MudText>
-                    @if (showEmail)
-                    {
-                        <MudText Typo="Typo.caption" Style="opacity: .8;">@email</MudText>
-                    }
+                    <MudText Typo="Typo.body1" Style="font-weight: 500;">@GetDisplayName(context.User)</MudText>
                 </div>
             </div>
         </MudPaper>
